@@ -1,0 +1,44 @@
+version: "0.5"
+
+processes:
+  db:
+    command: start-postgres-app
+    ready_log_line: "is ready to accept connections"
+  caddy:
+    command: caddy run --config Caddyfile --adapter caddyfile
+  frontend:
+    command: echo hi
+    depends_on:
+      db:
+        condition: process_log_ready
+  backend:
+    command: echo hi
+    depends_on:
+      db:
+        condition: process_log_ready
+  db-explorer:
+    command: pgweb --url postgres://datata1:devpassword@localhost:5432
+    depends_on:
+      db:
+        condition: process_log_ready
+  minio:
+    command: echo hi
+    depends_on:
+      db:
+        condition: process_log_ready
+  prefect:
+    command: echo hi
+    depends_on:
+      db:
+        condition: process_log_ready
+  prefect-worker:
+    command: echo hi
+    depends_on:
+      db:
+        condition: process_log_ready
+  cron:
+    command: echo hi
+    depends_on:
+      db:
+        condition: process_log_ready
+  
