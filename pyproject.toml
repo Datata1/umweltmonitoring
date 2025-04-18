@@ -1,7 +1,19 @@
 [project]
-name = "OpenSenseMap Explorer"
+name = "OpenSenseMap-Explorer"
 version = "0.1.0"
 description = "Explore you favorite OpenSenseBoxes!"
 readme = "README.md"
 requires-python = ">=3.12.9"
-dependencies = []
+dependencies = [
+    "alembic>=1.15.2",
+    "apscheduler>=3.11.0",
+    "fastapi>=0.115.12",
+    "psycopg2-binary>=2.9.10",
+    "pydantic-settings>=2.8.1",
+    "python-dotenv>=1.1.0",
+    "requests>=2.32.3",
+    "sqlalchemy>=2.0.40",
+    "starlette>=0.46.2",
+    "tenacity>=9.1.2",
+    "uvicorn[standard]>=0.34.1",
+]

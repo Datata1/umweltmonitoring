@@ -22,6 +22,7 @@ projekt-opensensebox-dashboard/
 │   │   │   ├── schemas/      # Pydantic Modelle (Datenvalidierung, API Request/Response)
 │   │   │   │   └── sensor.py
 │   │   │   └── db/           # Datenbank-Setup
+│   │   │       ├── init_db.py  # initialisiert db
 │   │   │       └── session.py  # Datenbank-Session Management
 │   │   ├── alembic/
 │   │   ├── alembic.ini

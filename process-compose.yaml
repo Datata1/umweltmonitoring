@@ -6,18 +6,19 @@ processes:
     ready_log_line: "is ready to accept connections"
   caddy:
     command: caddy run --config Caddyfile --adapter caddyfile
-  frontend:
-    command: echo hi
-    depends_on:
-      db:
-        condition: process_log_ready
   backend:
-    command: echo hi
+    command: cd services/backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    ready_log_line: "Application startup complete."
     depends_on:
       db:
         condition: process_log_ready
   db-explorer:
-    command: pgweb --url postgres://datata1:devpassword@localhost:5432
+    command: pgweb --url postgres://datata1:devpassword@localhost:5432/umwelt --skip-open --prefix=db-admin
+    depends_on:
+      backend:
+        condition: process_log_ready
+  frontend:
+    command: echo hi
     depends_on:
       db:
         condition: process_log_ready

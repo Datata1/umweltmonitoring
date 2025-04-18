@@ -6,28 +6,35 @@
 
     encode gzip
 
-    # fast-api backend 
-    handle_path /api/* {
+    # --- Routen von spezifisch zu allgemein ---
+
+    # fast-api backend
+    route /api/* {
+        # Optional: uri strip_prefix /api (falls FastAPI /api nicht erwartet)
         reverse_proxy localhost:8000
     }
 
     # object storage (für models)
-    handle_path /minio/* {
+    route /minio* { # Matcht /minio und /minio/...
+        uri strip_prefix /minio # Wahrscheinlich benötigt
         reverse_proxy localhost:9001
     }
 
     # db explorer
-    handle_path /db-admin/* {
-        reverse_proxy localhost:5050 
+    route /db-admin* { # Matcht /db-admin und /db-admin/...
+        reverse_proxy localhost:8081 # Du hast bestätigt, dass Port 8081 korrekt ist
     }
 
     # prefect ui
-    handle_path /prefect/* {
+    route /prefect* { # Matcht /prefect und /prefect/...
+        uri strip_prefix /prefect # Wahrscheinlich benötigt
         reverse_proxy localhost:4200
     }
 
-    # catch-all zum frontend
-    handle {
+    # Finaler Catch-all für das Frontend
+    # Dieser route-Block hat keinen Matcher, fängt also alles ab,
+    # was von den oberen Blöcken nicht abgefangen wurde.
+    route {
         reverse_proxy localhost:8050
     }
 }

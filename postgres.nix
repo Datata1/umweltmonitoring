@@ -3,7 +3,7 @@
   pkgs.writeShellApplication {
     name = "start-postgres-app";
     runtimeInputs = with pkgs; [
-      postgresqlPackage # Verwende das übergebene Paket
+      postgresqlPackage 
       glibcLocales
       coreutils
       bash
