@@ -1,3 +1,5 @@
+import os
+
 from fastapi import FastAPI
 import logging
 from contextlib import asynccontextmanager
@@ -5,12 +7,23 @@ from starlette.concurrency import run_in_threadpool
 from apscheduler.schedulers.asyncio import AsyncIOScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from datetime import timedelta
+from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
 
 from app.db.init_db import initialize_database
 from app.db.data_ingestion import fetch_and_store_data
 
+# Router
+from app.api.v1.endpoints import sensors as sensors_router
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(os.path.dirname(os.path.dirname(BASE_DIR)))
+STATIC_DIR = os.path.join(project_root, "assets")
+FAVICON_PATH = os.path.join(STATIC_DIR, "favicon.ico")
+
 
 # Initialisiere den Scheduler
 scheduler = AsyncIOScheduler()
@@ -62,10 +75,11 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-@app.get("/")
-async def read_root():
-    return {"message": "Welcome to the Umweltmonitoring Backend!"}
+@app.get("/favicon.ico", include_in_schema=False)
+async def favicon():
+    return FileResponse(FAVICON_PATH)
 
-# --- Später: Router einbinden ---
-# from app.api.v1.endpoints import sensors as sensors_router
-# app.include_router(sensors_router.router, prefix="/api/v1", tags=["sensors"])
+app.mount("/assets", StaticFiles(directory=STATIC_DIR), name="assets")
+
+
+app.include_router(sensors_router.router, prefix="/api/v1", tags=["sensors"])

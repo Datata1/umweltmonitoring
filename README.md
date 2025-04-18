@@ -1,51 +1,52 @@
+```
 projekt-opensensebox-dashboard/
-├── .env.sample
-├── .gitignore
-├── docker-compose.yml
-├── pyproject.toml
-├── Caddyfile  # reverse proxy
-├── services/           
-│   ├── backend/
-│   │   ├── app/
-│   │   │   ├── main.py       # FastAPI App Instanz, Router Einbindung
-│   │   │   ├── api/          
-│   │   │   │   └── v1/
-│   │   │   │       └── endpoints/
-│   │   │   │           └── sensors.py # Endpunkte für Sensordaten
-│   │   │   ├── core/         # Konfiguration
-│   │   │   │   └── config.py
-│   │   │   ├── crud/         # Datenbank-Operationen (Create, Read, Update, Delete)
-│   │   │   │   └── crud_sensordata.py
-│   │   │   ├── models/       # SQLAlchemy ORM Modelle
-│   │   │   │   ├── base.py     # Basisklasse für Modelle
-│   │   │   │   └── sensor.py   # ORM Modell Sensordaten
-│   │   │   ├── schemas/      # Pydantic Modelle (Datenvalidierung, API Request/Response)
-│   │   │   │   └── sensor.py
-│   │   │   └── db/           # Datenbank-Setup
-│   │   │       ├── init_db.py  # initialisiert db
-│   │   │       └── session.py  # Datenbank-Session Management
-│   │   ├── alembic/
-│   │   ├── alembic.ini
-│   │   ├── Dockerfile
-│   │   └── requirements.txt
-│   ├── frontend/
-│   │   ├── app/
-│   │   │   ├── app.py        # Dash App Instanz, Layout Definition
-│   │   │    ├── callbacks.py  # Alle Callbacks
-│   │   │   ├── components/   # Wiederverwendbare Layout-Teile (optional)
-│   │   │   ├── assets/       # CSS, JS Dateien
-│   │   │   └── utils/     # Funktionen zum Abrufen von Daten vom Backend API
-│   │   │       └── api_client.py
-│   │   ├── Dockerfile
-│   │   └── requirements.txt
-│   ├── data_ingestion/
-│   │   ├── ingest.py  # schedule oder APScheduler
-│   │   ├── Dockerfile
-│   │   └── requirements.txt
-│   └── ml_service/     # (Zukünftig)
-│       ├── flows/      # Prefect Flows
-│       ├── tasks/      # Prefect Tasks
-│       ├── models/     # Gespeicherte Modelle
-│       ├── Dockerfile
-│       └── requirements.txt
-└── README.md
+├── .env.sample              # Beispiel für Umgebungsvariablen
+├── .gitignore               # Ignorierte Dateien für Git
+├── docker-compose.yml       # Konfiguration für Docker-Services
+├── pyproject.toml           # Projekt-Konfiguration (z.B. Poetry)
+├── Caddyfile                # Konfiguration für den Reverse Proxy (Caddy)
+└── services/                # Verzeichnis für einzelne Service-Komponenten
+    ├── backend/             # Backend-Service (FastAPI)
+    │   ├── app/             #   Haupt-Anwendungscode
+    │   │   ├── main.py      #     ► FastAPI App Instanz, Router Einbindung, Lifespan (DB Init, Scheduler)
+    │   │   ├── api/         #     ► API Endpunkte
+    │   │   │   └── v1/      #       ► API Version 1
+    │   │   │       └── endpoints/ # ►  API Endpunkte Definitionen
+    │   │   │           └── sensors.py # ►  Endpunkte für Sensordaten (CRUD, Aggregation, etc.)
+    │   │   ├── core/        #     ► Kernkonfigurationen
+    │   │   ├── crud/        #     ► Datenbank-Operationen (Create, Read, Update, Delete)
+    │   │   ├── models/      #     ► SQLAlchemy ORM Modelle
+    │   │   ├── schemas/     #     ► Pydantic Modelle (Datenvalidierung, API Request/Response)
+    │   │   └── db/          #     ► Datenbank-Setup und Skripte
+    │   ├── alembic/         #   Alembic Migrationsumgebung
+    │   ├── alembic.ini      #   Alembic Konfigurationsdatei
+    │   ├── Dockerfile       #   Dockerfile für den Backend-Service
+    ├── frontend/            # Frontend-Service (Dash)
+    │   └── app/             #   Hauptverzeichnis der Dash-Anwendung
+    │       ├── app.py       #     ► Haupt-Dash-Instanz, Basis-Layout, Navigation
+    │       ├── index.py     #     ► Optionale Startseite (Index-Seite)
+    │       ├── pages/       #     ► Verzeichnis für die einzelnen Seiten/Ansichten
+    │       ├── components/  #     ► Wiederverwendbare Dash-Layout-Komponenten (optional)
+    │       ├── callbacks/   #     ► Zentralisierte Callback-Definitionen (optional)
+    │       ├── assets/      #     ► Statische Dateien (CSS, JS, Bilder) - Browser-zugänglich
+    │       └── utils/       #     ► Hilfsfunktionen (z.B. API-Client, Datenverarbeitung)
+    │   └── Dockerfile       #   Dockerfile für den Frontend-Service
+    └── ml_service/          # Zukünftiger ML Service (z.B. mit Prefect)
+        ├── flows/           # ► Prefect Flows
+        ├── tasks/           # ► Prefect Tasks
+        ├── utils/          
+        ├── Dockerfile       
+```
+
+# Note:
+When changing the SQLAlchemy models then execute these commands in `services/backend`
+
+1.
+```
+alembic revision --autogenerate -m "Beschreibung der Änderung"
+```
+
+2. 
+```
+alembic upgrade head
+```

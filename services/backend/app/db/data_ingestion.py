@@ -4,10 +4,9 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-script_dir = os.path.dirname(os.path.abspath(__file__))
-parent_dir = os.path.dirname(script_dir)
-app_dir = os.path.dirname(parent_dir)
-sys.path.append(app_dir)
+# damit die app imports gefunden werden
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
@@ -49,7 +48,7 @@ def fetch_and_store_data():
             # Nur aktualisieren, wenn der API-Wert neuer ist
             if db_sensor_box.lastMeasurementAt is None or api_last_measurement_at > db_sensor_box.lastMeasurementAt:
                  db_sensor_box.lastMeasurementAt = api_last_measurement_at
-                 # todo? Aktualisiere auch andere Felder der Box, wenn nötig
+                 # TODO? Aktualisiere auch andere Felder der Box, wenn nötig
                  db.add(db_sensor_box)
                  db.commit()
                  logger.info(f"lastMeasurementAt für Sensorbox '{box_id}' auf {api_last_measurement_at} aktualisiert.")
@@ -105,8 +104,6 @@ def fetch_and_store_data():
                 response.raise_for_status()
                 sensor_measurements = response.json()
                 logger.info(f"  Received {len(sensor_measurements)} data points.")
-                # logger.info(f"  Data from {from_date_str} to {to_date_str}: {sensor_measurements}") # Kommentiere diese Zeile aus, da sie sehr viel Ausgabe erzeugen kann
-
 
                 if not sensor_measurements:
                     logger.info("  No data in this time window.")

@@ -1,0 +1,74 @@
+/* services/frontend/app/assets/style.css */
+
+.sidebar {
+    /* Grundlegendes Styling */
+    position: fixed; /* Oder absolute, je nach Layout */
+    top: 0;
+    left: 0;
+    width: 200px; /* Breite im ausgeklappten Zustand */
+    height: 100%;
+    background-color: #f8f9fa; /* Beispiel Hintergrundfarbe */
+    padding: 40px 20px;
+    transition: width 0.05s ease; /* Sanfter Übergang beim Ein-/Ausklappen */
+    overflow-x: hidden; /* Verstecke horizontalen Inhalt beim Einklappen */
+}
+
+.sidebar.collapsed {
+    width: 80px; /* Breite im eingeklappten Zustand */
+    padding: 0px; /* Passe hier weitere Stile an (z.B. Text verstecken) */
+}
+
+.sidebar.collapsed h2,
+.sidebar.collapsed hr,
+.sidebar.collapsed p,
+.sidebar.collapsed a {
+    display: none; /* Blendet diese Elemente aus */
+}
+
+.sidebar-toggle {
+    /* Styling für den Ein-/Ausklapp-Button */
+    position: absolute; /* Oder passe es in deinem Layout an */
+    top: 10px;
+    left: 20px; /* Position neben der Sidebar */
+    z-index: 1000; /* Stelle sicher, dass er über anderen Elementen liegt */
+}
+
+.content {
+    /* Styling für den Hauptinhaltsbereich */
+    margin-left: 260px; /* Platz für die Sidebar */
+    padding: 20px;
+    transition: margin-left 0.01s ease; /* Sanfter Übergang beim Einklappen */
+}
+
+.sidebar.collapsed ~ .content {
+    margin-left: 70px; /* Passe den Abstand an, wenn die Sidebar eingeklappt ist */
+}
+
+/* Styling für Navigationslinks */
+.sidebar .nav-link {
+    display: block; /* Stelle sicher, dass jeder Link eine neue Zeile beginnt */
+    padding: 10px 0;
+    color: #007bff; /* Beispiel Linkfarbe */
+    text-decoration: none;
+}
+
+.sidebar.collapsed .nav-link {
+    /* Stile für Links im eingeklappten Zustand (z.B. Text verstecken, nur Icons zeigen) */
+    white-space: nowrap; /* Verhindere Zeilenumbruch */
+    overflow: hidden; /* Text verstecken */
+    text-overflow: ellipsis; /* ... anzeigen, wenn Text abgeschnitten wird */
+}
+
+.sidebar .nav-link img.icon {
+    width: 24px; 
+    height: 24px;
+    vertical-align: middle; 
+}
+
+.sidebar.collapsed .nav-link span {
+    display: none; 
+}
+
+.sidebar.collapsed .nav-link img.icon {
+    margin-right: 0 !important; 
+}

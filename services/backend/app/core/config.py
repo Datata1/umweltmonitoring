@@ -1,4 +1,3 @@
-# services/backend/app/core/config.py
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from urllib.parse import quote_plus # Sicherstellen, dass Passwörter URL-safe sind
 

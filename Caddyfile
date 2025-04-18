@@ -1,8 +1,4 @@
 :3000 {
-    log {
-        output stdout
-        format console
-    }
 
     encode gzip
 
@@ -11,6 +7,21 @@
     # fast-api backend
     route /api/* {
         # Optional: uri strip_prefix /api (falls FastAPI /api nicht erwartet)
+        reverse_proxy localhost:8000
+    }
+
+    route /docs* {
+        # Optional: uri strip_prefix /docs (falls FastAPI /docs nicht erwartet)
+        reverse_proxy localhost:8000
+    }
+
+    route /openapi.json* {
+        # Optional: uri strip_prefix /docs (falls FastAPI /docs nicht erwartet)
+        reverse_proxy localhost:8000
+    }
+
+    route /favicon.ico* {
+        # Optional: uri strip_prefix /docs (falls FastAPI /docs nicht erwartet)
         reverse_proxy localhost:8000
     }
 

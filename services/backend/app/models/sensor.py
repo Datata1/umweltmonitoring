@@ -1,9 +1,8 @@
-# services/backend/app/models/sensor.py
-from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, JSON, PrimaryKeyConstraint
+from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, JSON, PrimaryKeyConstraint, Table, MetaData
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 from datetime import datetime, timezone
 
-from .base import Base # Importiere die Base Klasse
+from .base import Base 
 
 
 class SensorBox(Base):
@@ -54,3 +53,60 @@ class SensorData(Base):
     __table_args__ = (
         PrimaryKeyConstraint('id', 'measurement_timestamp', 'sensor_id'),
     )
+
+
+sensor_data_hourly_avg_view = Table(
+    "sensor_data_hourly_avg", # Der Name der Materialized View in der Datenbank
+    Base.metadata, # Oder verwende eine separate MetaData() Instanz, falls bevorzugt
+    Column("hour", DateTime(timezone=True)), # Der Zeitstempel-Spaltenname in der View
+    Column("sensor_id", String(50)),      # Der sensor_id Spaltenname in der View
+    Column("average_value", Float),      # Der aggregierte Wert Spaltenname in der View
+)
+
+# Tägliche Durchschnittswerte
+sensor_data_daily_avg_view = Table(
+    "sensor_data_daily_avg",
+    Base.metadata,
+    Column("day", DateTime(timezone=True)),
+    Column("sensor_id", String(50)),
+    Column("average_value", Float),
+)
+
+# Wöchentliche Durchschnittswerte
+sensor_data_weekly_avg_view = Table(
+    "sensor_data_weekly_avg",
+    Base.metadata,
+    Column("week", DateTime(timezone=True)),
+    Column("sensor_id", String(50)),
+    Column("average_value", Float),
+)
+
+# Monatliche Durchschnittswerte
+sensor_data_monthly_avg_view = Table(
+    "sensor_data_monthly_avg",
+    Base.metadata,
+    Column("month", DateTime(timezone=True)),
+    Column("sensor_id", String(50)),
+    Column("average_value", Float),
+)
+
+# Jährliche Durchschnittswerte
+sensor_data_yearly_avg_view = Table(
+    "sensor_data_yearly_avg",
+    Base.metadata,
+    Column("year", DateTime(timezone=True)),
+    Column("sensor_id", String(50)),
+    Column("average_value", Float),
+)
+
+# Tägliche Zusammenfassungen
+sensor_data_daily_summary_agg_view = Table(
+    "sensor_data_daily_summary_agg",
+    Base.metadata,
+    Column("day", DateTime(timezone=True)),
+    Column("sensor_id", String(50)),
+    Column("min_value", Float),
+    Column("max_value", Float),
+    Column("average_value", Float),
+    Column("count", Integer), 
+)
