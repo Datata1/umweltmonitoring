@@ -18,7 +18,7 @@ processes:
       backend:
         condition: process_log_ready
   frontend:
-    command: cd services/frontend && uv run python app.py
+    command: cd services/frontend/app/ && uv run python app.py
     depends_on:
       db:
         condition: process_log_ready

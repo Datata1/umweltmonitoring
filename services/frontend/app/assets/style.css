@@ -1,8 +1,20 @@
 /* services/frontend/app/assets/style.css */
 
+html, body {
+    height: 100%;
+    margin: 0; /* Entfernt Standard-Browser-Margin */
+    padding: 0; /* Entfernt Standard-Browser-Padding */
+    overflow: hidden; /* Verhindert Scrollen auf der Hauptseite, wenn Inhalte in Containern scrollen */
+}
+
+
+.container-fluid {
+    height: 100%; 
+    display: flex; 
+}
+
 .sidebar {
-    /* Grundlegendes Styling */
-    position: fixed; /* Oder absolute, je nach Layout */
+    position: fixed; 
     top: 0;
     left: 0;
     width: 200px; /* Breite im ausgeklappten Zustand */
@@ -35,7 +47,9 @@
 
 .content {
     /* Styling für den Hauptinhaltsbereich */
-    margin-left: 260px; /* Platz für die Sidebar */
+    height: 100%;
+    width:100%;
+    margin-left: 260px; 
     padding: 20px;
     transition: margin-left 0.01s ease; /* Sanfter Übergang beim Einklappen */
 }

@@ -1,5 +1,5 @@
 :3000 {
-
+    
     encode gzip
 
     # --- Routen von spezifisch zu allgemein ---

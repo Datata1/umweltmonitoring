@@ -4,59 +4,65 @@ import sys
 import logging
 
 logger = logging.getLogger(__name__)
-
-# Beibehalten der sys.path Anpassung wie vom Benutzer gewünscht
-# Dies fügt das Verzeichnis services/frontend/app/ zum Python Pfad hinzu
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-
+import dash
 from dash import dcc
 from dash import html
-from dash.dependencies import Input, Output
+from dash.dependencies import Input, Output, State
 
-# Importiere die Haupt-App Instanz
-# Dies sollte jetzt funktionieren, da 'app' im sys.path gefunden wird
-from app import app
+from maindash import app
+from utils import api_client 
 
-# Importiere deinen API Client
-# Dies sollte jetzt funktionieren, da 'utils' im sys.path gefunden wird
-from utils import api_client # <-- Korrigiere den Namen
-
-# Beispiel Layout für die Sensor Box Liste Seite
 layout = html.Div([
     html.H1("Sensor Boxen"),
-    html.Div(id='sensor-box-list-container'), # Hier werden die Sensorboxen angezeigt
+    html.Div(id='sensor-box-list-container'), 
 
-    # Optional: Loading Spinner
     dcc.Loading(id="loading-sensor-boxes", type="default", children=html.Div(id="loading-output")),
 ])
 
-
-
-# Beispiel Callback zum Laden der Sensorboxen, wenn die Seite geladen wird
-@app.callback(Output('sensor-box-list-container', 'children'),
-              Input('url', 'pathname')) # Trigger, wenn die URL sich ändert (und diese Seite angezeigt wird)
-def load_sensor_boxes(pathname):
-    logger.info("Entering load_sensor_boxes callback") # <-- Füge diese Zeile hinzu als allererstes in der Funktion
-    logger.info(f"Callback load_sensor_boxes triggered with pathname: {pathname}")
-
-    # Stelle sicher, dass dieser Callback nur auf dieser Seite ausgeführt wird
+@app.callback(Output('sensor-box-list-container', 'children'), 
+              Input('page-content', 'children'), 
+              State('url', 'pathname'), 
+              prevent_initial_call=False) 
+def trigger_data_load_for_sensor_box_list(page_content_children, pathname):
+    logger.info(f"trigger_data_load_for_sensor_box_list triggered. Pathname: {pathname}")
     if pathname == '/sensor_boxes':
-        logger.info("Pathname matches /sensor_boxes, attempting to load data.")
-        # Füge weitere Logs hinzu, um den Ablauf zu verfolgen
-        logger.info("About to enter try block for data fetching.")
-        try:
-            logger.info("Inside try block.")
-            # Daten vom Backend API abrufen
-            sensor_boxes_list = api_client.get_sensor_boxes()
-            logger.info(f"Received data from API: {sensor_boxes_list}")
-            # ... (restliche Logik und Logs im try Block) ...
+        logger.info("Pathname matches /sensor_boxes. Calling load_sensor_boxes function to fetch data.")
+        return load_sensor_boxes_logic() 
+    return dash.no_update
 
-        except Exception as e:
-            logger.error(f"Error caught in try block: {e}", exc_info=True)
-            # ... (restliche Fehlerbehandlung) ...
-            return html.Div(f"Fehler beim Laden der Sensorboxen: {e}", style={'color': 'red'}) # Stelle sicher, dass der Fehler hier zurückgegeben wird
 
-    else:
-        # Gebe None zurück, wenn der Callback auf einer anderen Seite getriggert wird
-        return None
+def load_sensor_boxes_logic():
+    logger.info("Executing load_sensor_boxes_logic (defined in callbacks/sensor_box_list_callbacks.py)")
+    try:
+        sensor_boxes_list = api_client.get_sensor_boxes()
+        logger.info(f"Received data from API in load_sensor_boxes_logic: {sensor_boxes_list}")
+
+        if isinstance(sensor_boxes_list, list):
+             if sensor_boxes_list:
+                 logger.info(f"Processing {len(sensor_boxes_list)} sensor boxes into HTML.")
+                 box_list_items = []
+                 for box in sensor_boxes_list:
+                     if isinstance(box, dict) and 'box_id' in box and 'name' in box:
+                         link = dcc.Link(f"Box: {box['name']} (ID: {box['box_id']})", href=f"/sensor_boxes/{box['box_id']}")
+                         box_list_items.append(html.Li(link))
+                     else:
+                         logger.warning(f"Unexpected data format for sensor box item: {box}")
+
+                 if box_list_items:
+                     return html.Ul(box_list_items)
+                 else:
+                     logger.info("Processed data resulted in an empty list of items for HTML.")
+                     return html.P("Keine Sensorboxen zum Anzeigen gefunden.")
+
+             else:
+                 logger.info("API returned an empty list.")
+                 return html.P("Keine Sensorboxen gefunden.")
+        else:
+             logger.error(f"API returned data that is not a list (expected list): {sensor_boxes_list}")
+             return html.Div("Unerwartetes Datenformat vom Backend erhalten.", style={'color': 'red'})
+
+    except Exception as e:
+        logger.error(f"Fehler in load_sensor_boxes_logic function: {e}", exc_info=True)
+        return html.Div(f"Fehler beim Laden der Sensorboxen: {e}", style={'color': 'red'})
