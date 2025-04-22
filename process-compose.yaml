@@ -37,8 +37,8 @@ processes:
     depends_on:
       db:
         condition: process_log_ready
-  cron:
-    command: echo hi
+  redis:
+    command: redis-server
     depends_on:
       db:
         condition: process_log_ready

@@ -11,6 +11,9 @@ class Settings(BaseSettings):
     DATABASE_URL: str | None = None
     MAINTENANCE_DATABASE_URL: str | None = None
 
+    REDIS_HOST: str = "localhost"
+    REDIS_PORT: int = 6379
+
     SENSOR_BOX_ID: str
 
     def __init__(self, **values):

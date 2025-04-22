@@ -21,9 +21,13 @@ layout = html.Div([
 
     html.Div(id='plot-container'), # Dieses Div wird den Graphen enthalten
 
-    # Optional: Loading Spinner für diese Seite
-    # Passe die ID an, um Konflikte zu vermeiden
-    dcc.Loading(id="loading-plot-data", type="default", children=html.Div(id="loading-output-plot")),
+    dcc.Loading(
+        id="loading-plot-data", # Eindeutige ID für die Loading-Komponente
+        type="graph", # Typ des Spinners ('default', 'circle', 'dot', 'graph')
+        fullscreen=False, # Setze auf True für einen Vollbild-Spinner
+        children=html.Div(id='plot-container') ,
+        className="loading-container" 
+    ),
 ])
 
 
@@ -45,9 +49,9 @@ def load_plot_data_on_page_load(page_content_children, pathname):
         # *** TODO: Die Parameter für sensor_id, from_date, to_date und aggregation_params
         # müssen von Bedienelementen auf der Seite oder aus der URL kommen ***
         default_sensor_id = '5faeb5589b2df8001b980307' 
-        default_from_date = datetime(2025, 4, 19, tzinfo=timezone.utc) 
-        default_to_date = datetime.now(timezone.utc) 
-        default_aggregation_params = {"interval": "2m", "aggregation_type": "avg", "smoothing_window": 1, "interpolation": "linear"} 
+        default_from_date = datetime(2020, 4, 19, tzinfo=timezone.utc) 
+        default_to_date = datetime(2025, 4, 19, tzinfo=timezone.utc) 
+        default_aggregation_params = {"interval": "1h", "aggregation_type": "avg", "smoothing_window": 1, "interpolation": "linear"} 
 
         return api_client.fetch_and_create_plot_component(
             default_sensor_id,

@@ -2,21 +2,32 @@
 import logging
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi_cache.decorator import cache
 from sqlalchemy.orm import Session
 from datetime import datetime
 
 from app.db.session import get_db
 from app.crud import crud_sensor
 from app.schemas import sensor as sensor_schema
+from app.utils.keybuilder import (
+    aggregate_key_builder,
+    list_sensors_key_builder,
+    raw_data_key_builder,
+    box_detail_key_builder,      
+    sensors_for_box_key_builder, 
+    summary_stats_key_builder    
+)
 
 router = APIRouter()
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+
 # --- GET Endpunkte (für das Frontend) ---
 
-@router.get("/sensor_boxes", response_model=List[sensor_schema.SensorBox]) 
+@router.get("/sensor_boxes", response_model=List[sensor_schema.SensorBox])
+@cache(expire=900, key_builder=list_sensors_key_builder) 
 def read_sensor_boxes(
     db: Session = Depends(get_db),
     skip: int = 0,
@@ -25,10 +36,12 @@ def read_sensor_boxes(
     """
     Ruft eine Liste aller Sensorboxen ab.
     """
+    logger.info(f"--> Cache MISS! Führe DB-Abfrage aus...")
     sensor_boxes = crud_sensor.sensor_box.get_multi(db, skip=skip, limit=limit)
     return sensor_boxes 
 
 @router.get("/sensor_boxes/{box_id}", response_model=sensor_schema.SensorBox)
+@cache(expire=900, key_builder=box_detail_key_builder) 
 def read_sensor_box(
     box_id: str,
     db: Session = Depends(get_db)
@@ -36,12 +49,14 @@ def read_sensor_box(
     """
     Ruft Details einer spezifischen Sensorbox ab.
     """
+    logger.info(f"--> Cache MISS! Führe DB-Abfrage aus...")
     db_sensor_box = crud_sensor.sensor_box.get(db, id=box_id)
     if db_sensor_box is None:
         raise HTTPException(status_code=404, detail="SensorBox not found")
     return db_sensor_box 
 
 @router.get("/sensor_boxes/{box_id}/sensors", response_model=List[sensor_schema.Sensor]) 
+@cache(expire=900, key_builder=sensors_for_box_key_builder) 
 def read_sensors_for_box(
     box_id: str,
     db: Session = Depends(get_db),
@@ -51,6 +66,7 @@ def read_sensors_for_box(
     """
     Ruft alle Sensoren für eine spezifische Sensorbox ab.
     """
+    logger.info(f"--> Cache MISS! Führe DB-Abfrage aus...")
     db_sensor_box = crud_sensor.sensor_box.get(db, id=box_id)
     if db_sensor_box is None:
         raise HTTPException(status_code=404, detail="SensorBox not found")
@@ -59,6 +75,7 @@ def read_sensors_for_box(
     return sensors 
 
 @router.get("/sensors/{sensor_id}/data", response_model=List[sensor_schema.SensorData]) 
+@cache(expire=900, key_builder=raw_data_key_builder) 
 def read_sensor_data(
     sensor_id: str,
     db: Session = Depends(get_db),
@@ -70,6 +87,7 @@ def read_sensor_data(
     """
     Ruft Datenpunkte für einen spezifischen Sensor ab, optional innerhalb eines Zeitraums.
     """
+    logger.info(f"--> Cache MISS! Führe DB-Abfrage aus...")
     db_sensor = crud_sensor.sensor.get(db, id=sensor_id)
     if db_sensor is None:
         raise HTTPException(status_code=404, detail="Sensor not found")
@@ -86,6 +104,7 @@ def read_sensor_data(
 
 
 @router.get("/sensors/{sensor_id}/data/daily_summary", response_model=sensor_schema.SensorDataDailySummaries)
+@cache(expire=900, key_builder=summary_stats_key_builder) 
 def read_sensor_data_daily_summary(
     sensor_id: str,
     from_date: datetime = Query(..., alias="from-date", description="Start date for aggregation (RFC3339 format)"), # Füge alias="from-date" hinzu
@@ -95,6 +114,7 @@ def read_sensor_data_daily_summary(
     """
     Ruft tägliche Zusammenfassungen (Min, Max, Avg, Count) für einen spezifischen Sensor in einem Zeitraum ab.
     """
+    logger.info(f"--> Cache MISS! Führe DB-Abfrage aus...")
     db_sensor = crud_sensor.sensor.get(db, id=sensor_id)
     if db_sensor is None:
         raise HTTPException(status_code=404, detail="Sensor not found")
@@ -109,6 +129,7 @@ def read_sensor_data_daily_summary(
 
 
 @router.get("/sensors/{sensor_id}/stats/", response_model=sensor_schema.SensorDataStatistics)
+@cache(expire=900, key_builder=summary_stats_key_builder) 
 def read_sensor_data_statistics(
     sensor_id: str,
     from_date: datetime = Query(..., alias="from-date", description="Start date for statistics (RFC3339 format)"),
@@ -118,6 +139,7 @@ def read_sensor_data_statistics(
     """
     Ruft statistische Kennzahlen (Avg, Min, Max, Count, StdDev) für einen spezifischen Sensor in einem Zeitraum ab.
     """
+    logger.info(f"--> Cache MISS! Führe DB-Abfrage aus...")
     db_sensor = crud_sensor.sensor.get(db, id=sensor_id)
     if db_sensor is None:
         raise HTTPException(status_code=404, detail="Sensor not found")
@@ -133,6 +155,7 @@ def read_sensor_data_statistics(
 
 
 @router.get("/sensors/{sensor_id}/data/aggregate/", response_model=sensor_schema.SensorDataAggregatedResponse)
+@cache(expire=900, key_builder=aggregate_key_builder) 
 def read_sensor_data_aggregate(
     sensor_id: str,
     from_date: datetime = Query(..., alias="from-date", description="Start date for aggregation (RFC3339 format)"),
@@ -148,6 +171,7 @@ def read_sensor_data_aggregate(
     nutzt optional kontinuierliche Aggregate, wendet optional Glättung/Interpolation an und inkludiert die Einheit.
     """
     logger.info(f"Request received for sensor {sensor_id} with interval={interval}, agg_type={aggregation_type}, smoothing={smoothing_window}, interpolation={interpolation_method}")
+    logger.info(f"--> Cache MISS! Führe DB-Abfrage aus...")
 
     db_sensor = crud_sensor.sensor.get(db, id=sensor_id)
     if db_sensor is None:
