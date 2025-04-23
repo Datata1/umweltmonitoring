@@ -2,7 +2,7 @@
 import os
 import sys
 import logging
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 
 logger = logging.getLogger(__name__)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -48,10 +48,10 @@ def load_plot_data_on_page_load(page_content_children, pathname):
         logger.info("Pathname matches /data_viz. Calling data fetching and plot creation function.")
         # *** TODO: Die Parameter für sensor_id, from_date, to_date und aggregation_params
         # müssen von Bedienelementen auf der Seite oder aus der URL kommen ***
-        default_sensor_id = '5faeb5589b2df8001b980307' 
-        default_from_date = datetime(2020, 4, 19, tzinfo=timezone.utc) 
-        default_to_date = datetime(2025, 4, 19, tzinfo=timezone.utc) 
-        default_aggregation_params = {"interval": "1h", "aggregation_type": "avg", "smoothing_window": 1, "interpolation": "linear"} 
+        default_sensor_id = '5faeb5589b2df8001b980307'
+        default_to_date = datetime.now(timezone.utc)
+        default_from_date = default_to_date - timedelta(days=7)
+        default_aggregation_params = {"interval": "1h", "aggregation_type": "avg", "smoothing_window": 3, "interpolation": "linear"} 
 
         return api_client.fetch_and_create_plot_component(
             default_sensor_id,

@@ -38,7 +38,7 @@
 
     # prefect ui
     route /prefect* { # Matcht /prefect und /prefect/...
-        uri strip_prefix /prefect # Wahrscheinlich benötigt
+        # uri strip_prefix /prefect # Wahrscheinlich benötigt
         reverse_proxy localhost:4200
     }
 

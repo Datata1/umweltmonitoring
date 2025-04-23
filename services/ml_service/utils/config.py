@@ -11,14 +11,6 @@ class Settings(BaseSettings):
     DATABASE_URL: str | None = None
     MAINTENANCE_DATABASE_URL: str | None = None
 
-    REDIS_HOST: str = "localhost"
-    REDIS_PORT: int = 6379
-
-    PREFECT_DB_NAME: str
-    PREFECT_UI_SERVE_BASE: str = "/prefect"
-
-    SENSOR_BOX_ID: str
-
     INITIAL_TIME_WINDOW_IN_DAYS: int = 7
     FETCH_TIME_WINDOW_DAYS: int = 2
 

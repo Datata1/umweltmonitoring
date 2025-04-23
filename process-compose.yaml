@@ -7,7 +7,7 @@ processes:
   caddy:
     command: caddy run --config Caddyfile --adapter caddyfile
   backend:
-    command: cd services/backend && uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    command: cd services/backend && uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     ready_log_line: "Application startup complete."
     depends_on:
       db:
@@ -22,21 +22,23 @@ processes:
     depends_on:
       db:
         condition: process_log_ready
-  minio:
-    command: echo hi
-    depends_on:
-      db:
-        condition: process_log_ready
   prefect:
-    command: echo hi
+    command: prefect server start
+    ready_log_line: "Check out the dashboard at http://127.0.0.1:4200"
     depends_on:
       db:
         condition: process_log_ready
+    environment:
+      - PREFECT_SERVER_API_DATABASE_CONNECTION_URL=${PREFECT_SERVER_API_DATABASE_CONNECTION_URL}
+      - PREFECT_API_URL=${PREFECT_API_URL} 
+      - PREFECT_UI_SERVE_BASE=${PREFECT_UI_SERVE_BASE}
+      - PREFECT_SERVER_DATABASE_CONNECTION_URL=${PREFECT_SERVER_DATABASE_CONNECTION_URL}
   prefect-worker:
-    command: echo hi
+    command: chmod +x ./services/ml_service/utils/prefect_worker.sh &&  cd ./services/ml_service && ./utils/prefect_worker.sh
     depends_on:
       db:
         condition: process_log_ready
+    replicas: 1
   redis:
     command: redis-server
     depends_on:

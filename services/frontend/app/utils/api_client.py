@@ -1,9 +1,9 @@
 # services/frontend/app/utils/api_client.py
 import requests
 import os
-import logging
-from datetime import datetime
+from datetime import datetime, timezone
 from dash import html
+import logging
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +34,10 @@ def get_aggregated_data(sensor_id: str, from_date: datetime, to_date: datetime, 
     """
     url = f"{BACKEND_API_URL}/api/v1/sensors/{sensor_id}/data/aggregate/"
     # Formatiere Datumsangaben für die API-Anfrage im RFC3339 UTC Format
-    from_date_str = from_date.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
-    to_date_str = to_date.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+    from_date_utc = from_date.astimezone(timezone.utc)
+    to_date_utc = to_date.astimezone(timezone.utc)
+    from_date_str = from_date_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
+    to_date_str = to_date_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
 
     params = {
         "from-date": from_date_str, # Query Parameter Name vom Backend Endpunkt

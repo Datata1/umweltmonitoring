@@ -180,31 +180,6 @@ def read_sensor_data_aggregate(
     use_continuous_aggregate = False
     aggregated_data = []
 
-    logger.info(f"Checking for continuous aggregate. Aggregation type: {aggregation_type.lower()}, Interval: {interval.lower()}")
-
-    # --- Bedingungen für AVG kontinuierliche Aggregate ---
-    if aggregation_type.lower() == 'avg':
-        try:
-            # RUFE DIE KONSOLIDIERTE METHODE AUF
-            average_agg_data = crud_sensor.sensor_data.get_average_from_aggregate_view(
-                db,
-                sensor_id=sensor_id,
-                from_date=from_date,
-                to_date=to_date,
-                interval=interval
-            )
-            if average_agg_data is not None:
-                aggregated_data = average_agg_data
-                use_continuous_aggregate = True
-                used_agg_interval = interval 
-                logger.info(f"Successfully queried continuous average aggregate for sensor {sensor_id} with interval {interval}.")
-            else:
-                 logger.info(f"No continuous average aggregate found for interval {interval}. Falling back.")
-
-
-        except Exception as e:
-             logger.warning(f"Failed to query continuous average aggregate using get_average_from_aggregate_view: {e}", exc_info=True)
-
     # Wenn keine passende kontinuierliche Aggregation verwendet wurde oder Fehler auftraten
     if not use_continuous_aggregate:
         logger.info(f"Falling back to raw data aggregation for sensor {sensor_id}")

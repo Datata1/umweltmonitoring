@@ -53,6 +53,8 @@ def create_database_if_not_exists():
                 logger.info(f"Database '{settings.DB_NAME}' does not exist. Creating...")
                 connection.execute(text(f'CREATE DATABASE "{settings.DB_NAME}"'))
                 logger.info(f"Database '{settings.DB_NAME}' created successfully.")
+                connection.execute(text(f'CREATE DATABASE "{settings.PREFECT_DB_NAME}"'))
+                logger.info(f"Database '{settings.PREFECT_DB_NAME}' created successfully.")
             else:
                 logger.info(f"Database '{settings.DB_NAME}' already exists.")
     except Exception as e:

@@ -50,3 +50,11 @@ alembic revision --autogenerate -m "Beschreibung der Änderung"
 ```
 alembic upgrade head
 ```
+
+
+# TODO:
+- implement redis cache for api endpoint requests
+- create statistic components for dashboard
+- add create view functionality. Save configured dashboard for later
+- set up prefect for ml workloads
+- 

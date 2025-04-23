@@ -98,8 +98,6 @@ def fetch_and_store_data():
         if not db_sensor_box:
             logger.info(f"SensorBox '{box_id}' nicht in DB gefunden. Erstelle...")
 
-            # --- KORRIGIERTE ERSTELLUNG DES PAYLOADS ---
-            # Extrahiere erforderliche und optionale Felder explizit
             try:
                 box_create_payload = {
                     "box_id": box_data['_id'], # ID aus API
@@ -108,13 +106,11 @@ def fetch_and_store_data():
                     "model": box_data.get('model'),       # Optional
                     "currentLocation": box_data.get('currentLocation'), # Optional
                     "lastMeasurementAt": parse_api_datetime(box_data.get('lastMeasurementAt')), # Optional, sicher parsen
-                    "createdAt": parse_api_datetime(box_data.get('createdAt')) or datetime.now(timezone.utc), # Erforderlich, Fallback auf now()
-                    "updatedAt": parse_api_datetime(box_data.get('updatedAt')) or datetime.now(timezone.utc)  # Erforderlich, Fallback auf now()
-                    # last_data_fetched wird hier NICHT gesetzt, bleibt initial NULL
+                    "last_data_fetched":  parse_api_datetime(box_data.get('lastMeasurementAt')) - timedelta(days=settings.INITIAL_TIME_WINDOW_IN_DAYS),  # damit die letzten 7 Tage gefe
+                    "createdAt": parse_api_datetime(box_data.get('createdAt')) or datetime.now(timezone.utc), 
+                    "updatedAt": parse_api_datetime(box_data.get('updatedAt')) or datetime.now(timezone.utc)  
                 }
-                # Entferne Schlüssel mit None-Werten, falls das Schema das nicht mag (optional)
-                # box_create_payload = {k: v for k, v in box_create_payload.items() if v is not None}
-
+                logger.info(f"last_data_fetched: {parse_api_datetime(box_data.get('lastMeasurementAt')) - timedelta(days=settings.INITIAL_TIME_WINDOW_IN_DAYS)}")
                 sensor_box_schema_create = sensor_schema.SensorBoxCreate(**box_create_payload)
 
             except KeyError as e_key:
@@ -126,7 +122,6 @@ def fetch_and_store_data():
                  logger.error(f"Daten, die zum Fehler führten: {box_create_payload}")
                  db.rollback()
                  return
-            # --- ENDE KORREKTUR ---
 
             db_sensor_box_obj = crud_sensor.sensor_box.create(db, obj_in=sensor_box_schema_create)
             logger.info(f"SensorBox '{box_id}' zur Session hinzugefügt.")
@@ -199,11 +194,10 @@ def fetch_and_store_data():
             to_date_utc = now_utc
 
         last_fetched_utc = db_sensor_box.last_data_fetched.astimezone(timezone.utc) if db_sensor_box.last_data_fetched else None
-        created_at_utc = db_sensor_box.createdAt.astimezone(timezone.utc)
 
         # WICHTIG: Wenn die Box neu ist, MUSS createdAt als Start verwendet werden.
         # last_data_fetched ist hier noch NULL.
-        current_from_date = created_at_utc if new_box_processed or last_fetched_utc is None else last_fetched_utc
+        current_from_date = last_fetched_utc
 
         current_from_date = current_from_date.astimezone(timezone.utc)
         to_date_utc = to_date_utc.astimezone(timezone.utc)
