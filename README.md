@@ -5,6 +5,7 @@ projekt-opensensebox-dashboard/
 ├── docker-compose.yml       # Konfiguration für Docker-Services
 ├── pyproject.toml           # Projekt-Konfiguration (z.B. Poetry)
 ├── Caddyfile                # Konfiguration für den Reverse Proxy (Caddy)
+├── init_script              # SQL Skripte bei DB Initialisierung
 └── services/                # Verzeichnis für einzelne Service-Komponenten
     ├── backend/             # Backend-Service (FastAPI)
     │   ├── app/             #   Haupt-Anwendungscode
@@ -18,16 +19,13 @@ projekt-opensensebox-dashboard/
     │   │   ├── models/      #     ► SQLAlchemy ORM Modelle
     │   │   ├── schemas/     #     ► Pydantic Modelle (Datenvalidierung, API Request/Response)
     │   │   └── db/          #     ► Datenbank-Setup und Skripte
-    │   ├── alembic/         #   Alembic Migrationsumgebung
-    │   ├── alembic.ini      #   Alembic Konfigurationsdatei
     │   ├── Dockerfile       #   Dockerfile für den Backend-Service
     ├── frontend/            # Frontend-Service (Dash)
     │   └── app/             #   Hauptverzeichnis der Dash-Anwendung
     │       ├── app.py       #     ► Haupt-Dash-Instanz, Basis-Layout, Navigation
-    │       ├── index.py     #     ► Optionale Startseite (Index-Seite)
+    │       ├── maindash.py  #     ► Workaround für callback in verschiedenen Dateien
     │       ├── pages/       #     ► Verzeichnis für die einzelnen Seiten/Ansichten
-    │       ├── components/  #     ► Wiederverwendbare Dash-Layout-Komponenten (optional)
-    │       ├── callbacks/   #     ► Zentralisierte Callback-Definitionen (optional)
+    │       ├── components/  #     ► Wiederverwendbare Dash-Layout-Komponenten 
     │       ├── assets/      #     ► Statische Dateien (CSS, JS, Bilder) - Browser-zugänglich
     │       └── utils/       #     ► Hilfsfunktionen (z.B. API-Client, Datenverarbeitung)
     │   └── Dockerfile       #   Dockerfile für den Frontend-Service
@@ -38,23 +36,18 @@ projekt-opensensebox-dashboard/
         ├── Dockerfile       
 ```
 
-# Note:
-When changing the SQLAlchemy models then execute these commands in `services/backend`
-
-1.
-```
-alembic revision --autogenerate -m "Beschreibung der Änderung"
-```
-
-2. 
-```
-alembic upgrade head
-```
+1. frontend `localhost:3000`
+2. prefect `localhost:3000/prefect`
+3. db-explorer `localhost:3000/db-admin`
+4. api documentation `localhost:3000/docs#`
 
 
 # TODO:
-- implement redis cache for api endpoint requests
-- create statistic components for dashboard
-- add create view functionality. Save configured dashboard for later
 - set up prefect for ml workloads
-- 
+- setup sql init script (./init_scripts) instead of doing it in the backend (services/backend/db/init_db.py)
+- plan backend endpoints
+- refactor code base
+- reduce logs overall (especially in prefect since logs are stored in db)
+- plan frontend design 
+- plan frontend components
+- add todos

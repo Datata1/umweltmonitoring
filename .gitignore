@@ -11,3 +11,5 @@ wheels/
 
 pgdata
 pgsocket
+
+dump.rdb

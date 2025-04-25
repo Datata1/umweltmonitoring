@@ -11,6 +11,7 @@ services:
       POSTGRES_DB: ${DB_NAME:-umwelt}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init_scripts:/docker-entrypoint-initdb.d
     ports:
       - "5432:5432"
     restart: unless-stopped
@@ -29,135 +30,116 @@ services:
     ports: 
       - "6379:6379"
 
-  # backend:
-  #   container_name: backend_fastapi
-  #   build:
-  #     context: ./services/backend
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - ./services/backend:/app 
-  #   command: uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000 
-  #   environment:
-  #     # Lade diese aus .env
-  #     - DB_USER=${DB_USER}
-  #     - DB_PASSWORD=${DB_PASSWORD}
-  #     - DB_HOST=db # <- Host ist der Service-Name!
-  #     - DB_PORT=${DB_PORT:-5432}
-  #     - DB_NAME=${DB_NAME}
-  #     - REDIS_HOST=redis # <- Host ist der Service-Name!
-  #     - REDIS_PORT=${REDIS_PORT:-6379}
-  #     - SENSOR_BOX_ID=${SENSOR_BOX_ID} # Wird für den Startup-Check benötigt
-  #     - INITIAL_TIME_WINDOW_IN_DAYS=${INITIAL_TIME_WINDOW_IN_DAYS:-7}
-  #     - FETCH_TIME_WINDOW_DAYS=${FETCH_TIME_WINDOW_DAYS:-2}
-  #     - PREFECT_API_URL=http://prefect:4200/api
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy 
-  #     redis:
-  #       condition: service_started 
-  #   restart: unless-stopped
+  backend:
+    container_name: backend_fastapi
+    build:
+      context: .
+      dockerfile: ./services/backend/Dockerfile
+    volumes:
+      - ./services/backend:/app/app 
+    command: uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+    environment:
+      - PREFECT_API_URL=http://prefect:4200/api
+    working_dir: /app/app 
+    depends_on:
+      db:
+        condition: service_healthy 
+      redis:
+        condition: service_started 
+      prefect:
+        condition: service_started
+      prefect-worker:
+        condition: service_started
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
 
-  # frontend:
-  #   container_name: frontend_dash
-  #   build:
-  #     context: ./services/frontend
-  #     dockerfile: Dockerfile
-  #   volumes:
-  #     - ./services/frontend:/app 
-  #   # Das Startkommando muss im Dockerfile definiert sein (CMD oder ENTRYPOINT)
-  #   # Es muss sicherstellen, dass Dash auf 0.0.0.0:8050 lauscht.
-  #   # command: python app/app.py # Beispiel, besser im Dockerfile
-  #   environment:
-  #     # URL zum Backend aus Sicht des Frontend-Containers
-  #     - BACKEND_API_URL=http://backend:8000
-  #     # Andere benötigte Vars
-  #   depends_on:
-  #     - backend # Wartet bis Backend gestartet ist (implizit)
-  #   restart: unless-stopped
+  frontend:
+    container_name: frontend_dash
+    command: uv run python ./app/app.py
+    build:
+      context: .
+      dockerfile: ./services/frontend/Dockerfile
+    volumes:
+      - ./services/frontend:/app/app 
+    environment:
+      - BACKEND_API_URL=http://backend:8000
+    working_dir: /app/app 
+    depends_on:
+      - backend 
+    restart: unless-stopped
+    ports:
+      - "8050:8050"
 
-  # prefect:
-  #   container_name: prefect_server
-  #   # Entweder eigenes Image bauen oder offizielles verwenden
-  #   image: prefecthq/prefect:3-latest 
-  #   # build:
-  #   #   context: ./services/ml_service # Falls du ein eigenes baust
-  #   #   dockerfile: Dockerfile
-  #   command: prefect server start
-  #   environment:
-  #     # WICHTIG: Verwende 'db' als Hostnamen für die DB
-  #     - PREFECT_SERVER_API_DATABASE_CONNECTION_URL=postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT}/${DB_NAME}
-  #     # API URL für interne Kommunikation und Worker
-  #     - PREFECT_API_URL=http://prefect:4200/api
-  #     # Für Caddy Reverse Proxy
-  #     - PREFECT_UI_SERVE_BASE=/prefect
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   restart: unless-stopped
+  prefect:
+    container_name: prefect_server
+    image: prefecthq/prefect:3-latest 
+    command: prefect server start --host 0.0.0.0
+    environment:
+      - PREFECT_SERVER_DATABASE_CONNECTION_URL=postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT}/${PREFECT_DB_NAME}
+      - PREFECT_API_URL=http://0.0.0.0:4200/api
+      - PREFECT_UI_SERVE_BASE=/prefect
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "4200:4200"
 
-  # prefect-worker:
-  #   container_name: prefect_worker
-  #   # Nutzt wahrscheinlich das gleiche Image wie der Prefect Server oder ein eigenes
-  #   build:
-  #     context: ./services/ml_service # Oder Projekt-Root, falls nötig
-  #     dockerfile: Dockerfile # Stelle sicher, dass dieses Dockerfile Zugriff auf Backend-Code erlaubt (via COPY oder PYTHONPATH-Anpassung)
-  #   volumes:
-  #     # Mountet Code, damit der Worker Flows/Tasks/Utils findet
-  #     # Option 1: Nur ml_service (wenn Backend als Paket installiert wird)
-  #     # - ./services/ml_service:/app/services/ml_service
-  #     # Option 2: Projekt-Root + PYTHONPATH (wie besprochen)
-  #     - ./:/app # Mountet das gesamte Projekt nach /app im Container
-  #   working_dir: /app/services/ml_service # Wechselt ins Verzeichnis, bevor das Skript läuft
-  #   command: sh -c "chmod +x ./utils/prefect_worker.sh && ./utils/prefect_worker.sh"
-  #   environment:
-  #     # API URL zum Verbinden mit dem Server
-  #     - PREFECT_API_URL=http://prefect:4200/api
-  #     # DB URL für die Tasks (via db_utils)
-  #     - DATABASE_URL_PREFECT=postgresql+psycopg2://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT}/${DB_NAME}
-  #     # Fügt das Backend-Verzeichnis zum PYTHONPATH hinzu (wenn Option 2 für Volumes gewählt)
-  #     - PYTHONPATH=/app/services/backend
-  #   depends_on:
-  #     - prefect # Muss laufen, bevor Worker startet
-  #     - db # Muss laufen für die Tasks
-  #   restart: unless-stopped
+  prefect-worker:
+    container_name: prefect_worker
+    build:
+      context: . 
+      dockerfile: ./services/ml_service/Dockerfile 
+    volumes:
+      - ./:/app 
+    working_dir: /app/services/ml_service 
+    command: sh -c "chmod +x ./utils/prefect_worker.sh && ./utils/prefect_worker.sh"
+    environment:
+      - PREFECT_API_URL=http://prefect:4200/api
+      - DATABASE_URL_PREFECT=postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT}/${PREFECT_DB_NAME}
+      - PREFECT_WORKER_WEBSERVER_PORT=8001
+    depends_on:
+      db:
+        condition: service_healthy
+      prefect:
+        condition: service_started
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
 
-  # db-explorer:
-  #   container_name: pgweb_explorer
-  #   image: sosedoff/pgweb:latest
-  #   # Ports werden nicht direkt freigegeben, Zugriff via Caddy
-  #   command: pgweb --url=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable --bind=0.0.0.0 --prefix=/db-admin --skip-open
-  #   environment:
-  #     # Wiederhole env vars, da command sie braucht, ODER nur in command verwenden
-  #     - DB_USER=${DB_USER}
-  #     - DB_PASSWORD=${DB_PASSWORD}
-  #     - DB_HOST=db
-  #     - DB_PORT=${DB_PORT:-5432}
-  #     - DB_NAME=${DB_NAME}
-  #   depends_on:
-  #     db:
-  #       condition: service_healthy
-  #   restart: unless-stopped
+  db-explorer:
+    container_name: pgweb_explorer
+    image: sosedoff/pgweb:latest
+    command: pgweb --url=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable --bind=0.0.0.0 --prefix=db-admin --skip-open
+    environment:
+      # Wiederhole env vars, da command sie braucht, ODER nur in command verwenden
+      - DB_USER=${DB_USER}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_HOST=db
+      - DB_PORT=${DB_PORT:-5432}
+      - DB_NAME=${DB_NAME}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+    ports:
+      - "8081:8081" 
 
-  # caddy:
-  #   container_name: caddy_proxy
-  #   image: caddy:latest
-  #   restart: unless-stopped
-  #   ports:
-  #     # Mappt Host-Port 3000 auf Container-Port 3000
-  #     - "3000:3000"
-  #     # Optional: Port 443 für HTTPS, wenn Caddy TLS managen soll
-  #     # - "443:443"
-  #   volumes:
-  #     # Mountet deine lokale Caddyfile in den Container
-  #     - ./Caddyfile:/etc/caddy/Caddyfile
-  #     # Volumes für Caddy's Daten (TLS Zertifikate etc.)
-  #     - caddy_data:/data
-  #     - caddy_config:/config
-  #   depends_on: # Wartet, bis alle Backend-Dienste gestartet sind
-  #     - backend
-  #     - frontend
-  #     - prefect
-  #     - db-explorer
+  caddy:
+    container_name: caddy_proxy
+    image: caddy:latest
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on: 
+      - backend
+      - prefect
+      - db-explorer
 
 # --- Benannte Volumes für persistente Daten ---
 volumes:

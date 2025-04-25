@@ -72,4 +72,4 @@ def toggle_sidebar(n_clicks, current_sidebar_class):
 
 if __name__ == '__main__':
     logger.info("Starting Dash application (development server)...") 
-    app.run(debug=True)
+    app.run(debug=True, host='0.0.0.0', port=8050)

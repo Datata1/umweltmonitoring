@@ -11,9 +11,9 @@ INTERVAL_SECONDS=180
 
 # --- Work Pool erstellen (falls nicht vorhanden) ---
 echo "Prüfe Work Pool '$WORK_POOL_NAME'..."
-if ! prefect work-pool inspect "$WORK_POOL_NAME" > /dev/null 2>&1; then
+if ! uv run prefect work-pool inspect "$WORK_POOL_NAME" > /dev/null 2>&1; then
     echo "Work Pool '$WORK_POOL_NAME' nicht gefunden. Erstelle..."
-    prefect work-pool create "$WORK_POOL_NAME" --type process
+    uv run prefect work-pool create "$WORK_POOL_NAME" --type process
     if [ $? -ne 0 ]; then
         echo "FEHLER: Konnte Work Pool '$WORK_POOL_NAME' nicht erstellen."
         exit 1
@@ -25,7 +25,7 @@ fi
 
 echo "Erstelle/Aktualisiere Deployment '$DEPLOYMENT_NAME' mit $INTERVAL_SECONDS Sekunden Intervall..."
 
-prefect deploy \
+uv run prefect deploy \
     --pool "$WORK_POOL_NAME" \
     --name "$DEPLOYMENT_NAME" \
     --interval "$INTERVAL_SECONDS" \
@@ -46,4 +46,4 @@ echo "Deployment '$DEPLOYMENT_NAME' erfolgreich konfiguriert."
 
 # --- Worker starten ---
 echo "Starte Worker für Pool '$WORK_POOL_NAME'..."
-prefect worker start --pool "$WORK_POOL_NAME"
+uv run prefect worker start --pool "$WORK_POOL_NAME"

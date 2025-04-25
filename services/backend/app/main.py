@@ -33,7 +33,8 @@ logger = logging.getLogger(__name__)
 
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 project_root = os.path.dirname(os.path.dirname(os.path.dirname(BASE_DIR)))
-STATIC_DIR = os.path.join(project_root, "assets")
+print(project_root)
+STATIC_DIR = os.path.join(project_root, "app", "assets")
 FAVICON_PATH = os.path.join(STATIC_DIR, "favicon.ico")
 
 
@@ -67,8 +68,8 @@ async def lifespan(app: FastAPI):
             logger.warning(f"SensorBox '{settings.SENSOR_BOX_ID}' nicht gefunden. Starte initialen Prefect Flow Run über Deployment '{full_deployment_identifier}'...")
 
             # --- Retry Logic ---
-            max_attempts = 5
-            delay_seconds = 1
+            max_attempts = 10
+            delay_seconds = 3
             run_submitted_successfully = False
 
             flow_run_params = {

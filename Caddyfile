@@ -7,45 +7,38 @@
     # fast-api backend
     route /api/* {
         # Optional: uri strip_prefix /api (falls FastAPI /api nicht erwartet)
-        reverse_proxy localhost:8000
+        reverse_proxy backend:8000
     }
 
     route /docs* {
         # Optional: uri strip_prefix /docs (falls FastAPI /docs nicht erwartet)
-        reverse_proxy localhost:8000
+        reverse_proxy backend:8000
     }
 
     route /openapi.json* {
-        # Optional: uri strip_prefix /docs (falls FastAPI /docs nicht erwartet)
-        reverse_proxy localhost:8000
+        reverse_proxy backend:8000
     }
 
     route /favicon.ico* {
         # Optional: uri strip_prefix /docs (falls FastAPI /docs nicht erwartet)
-        reverse_proxy localhost:8000
-    }
-
-    # object storage (für models)
-    route /minio* { # Matcht /minio und /minio/...
-        uri strip_prefix /minio # Wahrscheinlich benötigt
-        reverse_proxy localhost:9001
+        reverse_proxy backend:8000
     }
 
     # db explorer
     route /db-admin* { # Matcht /db-admin und /db-admin/...
-        reverse_proxy localhost:8081 # Du hast bestätigt, dass Port 8081 korrekt ist
+        reverse_proxy db-explorer:8081 # Du hast bestätigt, dass Port 8081 korrekt ist
     }
 
     # prefect ui
     route /prefect* { # Matcht /prefect und /prefect/...
         # uri strip_prefix /prefect # Wahrscheinlich benötigt
-        reverse_proxy localhost:4200
+        reverse_proxy prefect:4200
     }
 
     # Finaler Catch-all für das Frontend
     # Dieser route-Block hat keinen Matcher, fängt also alles ab,
     # was von den oberen Blöcken nicht abgefangen wurde.
     route {
-        reverse_proxy localhost:8050
+        reverse_proxy frontend:8050
     }
 }
