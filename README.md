@@ -41,6 +41,17 @@ projekt-opensensebox-dashboard/
 3. db-explorer `localhost:3000/db-admin`
 4. api documentation `localhost:3000/docs#`
 
+commands:
+
+1. start docker-compose
+```sh
+sudo docker-compose up --build --force-recreate
+```
+
+2. tear-down docker container completly (persistent volumes too)
+```sh
+sudo docker-compose down --volumes
+```
 
 # TODO:
 - set up prefect for ml workloads
@@ -50,4 +61,4 @@ projekt-opensensebox-dashboard/
 - reduce logs overall (especially in prefect since logs are stored in db)
 - plan frontend design 
 - plan frontend components
-- add todos
+- add more todos
