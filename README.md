@@ -53,6 +53,11 @@ sudo docker-compose up --build --force-recreate
 sudo docker-compose down --volumes
 ```
 
+3. use uv to init virtual env ([uv installation](https://docs.astral.sh/uv/getting-started/installation/))
+```
+uv sync
+```
+
 # TODO:
 - set up prefect for ml workloads
 - setup sql init script (./init_scripts) instead of doing it in the backend (services/backend/db/init_db.py)
