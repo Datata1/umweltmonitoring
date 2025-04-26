@@ -67,3 +67,4 @@ uv sync
 - plan frontend design 
 - plan frontend components
 - add more todos
+- package orm-model, schemas and model from backend, so that we can use it in the frontend as package (right now code was just copied to the utils directory in the frontend) 
