@@ -11,13 +11,13 @@ from datetime import timedelta
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 
-from app.utils.db_session import SessionLocal
-from app.core.config import settings
+from utils.db_session import SessionLocal
+from core.config import settings
 from shared.crud import crud_sensor
 
 
 # Router
-from app.api.v1.endpoints import sensors as sensors_router
+from api.v1.endpoints import sensors as sensors_router
 
 # Importiere FastAPICache und Redis Backend
 from fastapi_cache import FastAPICache

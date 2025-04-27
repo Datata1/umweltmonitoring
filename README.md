@@ -59,15 +59,10 @@ uv sync
 
 # TODO:
 - plan backend endpoints
-- refactor code base
 - reduce logs overall (especially in prefect since logs are stored in db)
 - plan frontend design 
 - plan frontend components
-<<<<<<< HEAD
-- add more todos
-- package orm-model, schemas and model from backend, so that we can use it in the frontend as package (right now code was just copied to the utils directory in the frontend) 
-=======
 - plan prefect flows for ml workloads
 - add prefect artifacts to flows to debug flows
 - add more todos
->>>>>>> 79ed699 (refactor shared codebase)
+- move code one level up in service | app/ directory is unnecessary

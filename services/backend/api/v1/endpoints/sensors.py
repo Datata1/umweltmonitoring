@@ -6,12 +6,10 @@ from fastapi_cache.decorator import cache
 from sqlalchemy.orm import Session
 from datetime import datetime
 
-from app.utils.db_session import get_db
+from utils.db_session import get_db
 from shared.crud import crud_sensor
-# from app.crud import crud_sensor
 from shared.schemas import sensor as sensor_schema
-# from app.schemas import sensor as sensor_schema
-from app.utils.keybuilder import (
+from utils.keybuilder import (
     aggregate_key_builder,
     list_sensors_key_builder,
     raw_data_key_builder,
