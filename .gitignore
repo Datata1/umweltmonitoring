@@ -8,8 +8,10 @@ wheels/
 
 # Virtual environments
 .venv
+.shared
 
-pgdata
-pgsocket
 
 dump.rdb
+
+OpenSenseMap_Explorer.egg-info
+bdist.linux-x86_64

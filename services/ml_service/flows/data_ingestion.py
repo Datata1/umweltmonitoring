@@ -75,4 +75,3 @@ async def data_ingestion_flow(
     update_final_box_status(box_id, to_date, all_fetch_results) 
 
     logger.info(f"Flow für Box {box_id} abgeschlossen.") 
-    pass

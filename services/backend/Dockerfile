@@ -8,12 +8,10 @@ WORKDIR /app
 RUN pip install uv
 
 COPY pyproject.toml ./
-COPY uv.lock ./
+# COPY uv.lock ./
 COPY .env ./
 COPY ./assets ./assets
 
-RUN uv sync  
-
-COPY ./services/backend/app ./app
+RUN uv sync 
 
 EXPOSE 8000

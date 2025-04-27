@@ -36,11 +36,12 @@ services:
       context: .
       dockerfile: ./services/backend/Dockerfile
     volumes:
-      - ./services/backend:/app/app 
+      - ./services/backend:/app/backend
+      - ./shared:/app/backend/shared
     command: uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
     environment:
       - PREFECT_API_URL=http://prefect:4200/api
-    working_dir: /app/app 
+    working_dir: /app/backend 
     depends_on:
       db:
         condition: service_healthy 
@@ -61,10 +62,11 @@ services:
       context: .
       dockerfile: ./services/frontend/Dockerfile
     volumes:
-      - ./services/frontend:/app/app 
+      - ./services/frontend:/app/frontend
+      - .shared:/app/frontend/shared
     environment:
       - BACKEND_API_URL=http://backend:8000
-    working_dir: /app/app 
+    working_dir: /app/frontend 
     depends_on:
       - backend 
     restart: unless-stopped
@@ -92,8 +94,9 @@ services:
       context: . 
       dockerfile: ./services/ml_service/Dockerfile 
     volumes:
-      - ./:/app 
-    working_dir: /app/services/ml_service 
+      - ./services/ml_service:/app/ml_service 
+      - ./shared:/app/ml_service/shared
+    working_dir: /app/ml_service 
     command: sh -c "chmod +x ./utils/prefect_worker.sh && ./utils/prefect_worker.sh"
     environment:
       - PREFECT_API_URL=http://prefect:4200/api

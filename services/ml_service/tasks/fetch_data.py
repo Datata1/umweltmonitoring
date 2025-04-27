@@ -10,8 +10,8 @@ from sqlalchemy.exc import SQLAlchemyError # Import für DB Fehler
 from utils.db_utils import get_db_session
 
 # Importiere deine Anwendungsmodule (Pfade ggf. anpassen)
-from utils.db_schema import crud_sensor
-from utils.db_schema import sensor as sensor_schema
+from shared.crud import crud_sensor
+from shared.schemas import sensor as sensor_schema
 from utils.parse_datetime import parse_api_datetime
 
 OPEN_SENSE_MAP_API_URL = "https://api.opensensemap.org"

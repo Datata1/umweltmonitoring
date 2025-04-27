@@ -17,8 +17,7 @@ projekt-opensensebox-dashboard/
     │   │   ├── core/        #     ► Kernkonfigurationen
     │   │   ├── crud/        #     ► Datenbank-Operationen (Create, Read, Update, Delete)
     │   │   ├── models/      #     ► SQLAlchemy ORM Modelle
-    │   │   ├── schemas/     #     ► Pydantic Modelle (Datenvalidierung, API Request/Response)
-    │   │   └── db/          #     ► Datenbank-Setup und Skripte
+    │   │   └── schemas/     #     ► Pydantic Modelle (Datenvalidierung, API Request/Response)
     │   ├── Dockerfile       #   Dockerfile für den Backend-Service
     ├── frontend/            # Frontend-Service (Dash)
     │   └── app/             #   Hauptverzeichnis der Dash-Anwendung
@@ -33,7 +32,7 @@ projekt-opensensebox-dashboard/
         ├── flows/           # ► Prefect Flows
         ├── tasks/           # ► Prefect Tasks
         ├── utils/          
-        ├── Dockerfile       
+        └── Dockerfile       
 ```
 
 1. frontend `localhost:3000`
@@ -59,12 +58,16 @@ uv sync
 ```
 
 # TODO:
-- set up prefect for ml workloads
-- setup sql init script (./init_scripts) instead of doing it in the backend (services/backend/db/init_db.py)
 - plan backend endpoints
 - refactor code base
 - reduce logs overall (especially in prefect since logs are stored in db)
 - plan frontend design 
 - plan frontend components
+<<<<<<< HEAD
 - add more todos
 - package orm-model, schemas and model from backend, so that we can use it in the frontend as package (right now code was just copied to the utils directory in the frontend) 
+=======
+- plan prefect flows for ml workloads
+- add prefect artifacts to flows to debug flows
+- add more todos
+>>>>>>> 79ed699 (refactor shared codebase)

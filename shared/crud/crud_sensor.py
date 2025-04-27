@@ -5,31 +5,31 @@ from datetime import datetime
 from sqlalchemy.orm import Session
 from sqlalchemy import desc, func, case, column, over, text, alias
 
-from .models import SensorBox, Sensor, SensorData
-from .models import sensor_data_hourly_avg_view, sensor_data_daily_avg_view, \
+from ..models import sensor as sensor_model
+from ..models.sensor import sensor_data_hourly_avg_view, sensor_data_daily_avg_view, \
                               sensor_data_weekly_avg_view, sensor_data_monthly_avg_view, \
                               sensor_data_yearly_avg_view, sensor_data_daily_summary_agg_view
-from .sensor import SensorBoxCreate, SensorBoxUpdate, SensorCreate, SensorUpdate, SensorDataCreate
+from ..schemas import sensor as sensor_schema
 
 class CRUDSensorBox:
-    def get(self, db: Session, id: str) -> Optional[SensorBox]:
-        return db.query(SensorBox).filter(SensorBox.box_id == id).first()
+    def get(self, db: Session, id: str) -> Optional[sensor_model.SensorBox]:
+        return db.query(sensor_model.SensorBox).filter(sensor_model.SensorBox.box_id == id).first()
 
     # Fehlende Methode hinzugefügt
-    def get_multi(self, db: Session, *, skip: int = 0, limit: int = 100) -> List[SensorBox]:
+    def get_multi(self, db: Session, *, skip: int = 0, limit: int = 100) -> List[sensor_model.SensorBox]:
         """
         Ruft mehrere Sensorboxen ab.
         """
-        return db.query(SensorBox).offset(skip).limit(limit).all()
+        return db.query(sensor_model.SensorBox).offset(skip).limit(limit).all()
 
-    def create(self, db: Session, *, obj_in: SensorBoxCreate) -> SensorBox:
-        db_obj = SensorBox(**obj_in.model_dump())
+    def create(self, db: Session, *, obj_in: sensor_schema.SensorBoxCreate) -> sensor_model.SensorBox:
+        db_obj = sensor_model.SensorBox(**obj_in.model_dump())
         db.add(db_obj)
         db.commit()
         db.refresh(db_obj)
         return db_obj
 
-    def update(self, db: Session, *, db_obj: SensorBox, obj_in: SensorBoxUpdate) -> SensorBox:
+    def update(self, db: Session, *, db_obj: sensor_model.SensorBox, obj_in: sensor_schema.SensorBoxUpdate) -> sensor_model.SensorBox:
         update_data = obj_in.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(db_obj, key, value)
@@ -40,19 +40,19 @@ class CRUDSensorBox:
 
 
 class CRUDSensor:
-    def get(self, db: Session, id: str) -> Optional[Sensor]:
-        return db.query(Sensor).filter(Sensor.sensor_id == id).first()
+    def get(self, db: Session, id: str) -> Optional[sensor_model.Sensor]:
+        return db.query(sensor_model.Sensor).filter(sensor_model.Sensor.sensor_id == id).first()
 
     # Fehlende Methode hinzugefügt
-    def get_multi_by_box_id(self, db: Session, *, box_id: str, skip: int = 0, limit: int = 100) -> List[Sensor]:
+    def get_multi_by_box_id(self, db: Session, *, box_id: str, skip: int = 0, limit: int = 100) -> List[sensor_model.Sensor]:
         """
         Ruft alle Sensoren für eine spezifische Sensorbox ab.
         """
-        return db.query(Sensor).filter(Sensor.box_id == box_id).offset(skip).limit(limit).all()
+        return db.query(sensor_model.Sensor).filter(sensor_model.Sensor.box_id == box_id).offset(skip).limit(limit).all()
 
 
-    def create(self, db: Session, *, obj_in: SensorCreate) -> Sensor:
-        db_obj = Sensor(
+    def create(self, db: Session, *, obj_in: sensor_schema.SensorCreate) -> sensor_model.Sensor:
+        db_obj = sensor_model.Sensor(
             sensor_id=obj_in.sensor_id,
             box_id=obj_in.box_id,
             title=obj_in.title,
@@ -65,7 +65,7 @@ class CRUDSensor:
         db.refresh(db_obj)
         return db_obj
 
-    def update(self, db: Session, *, db_obj: Sensor, obj_in: SensorUpdate) -> Sensor:
+    def update(self, db: Session, *, db_obj: sensor_model.Sensor, obj_in: sensor_schema.SensorUpdate) -> sensor_model.Sensor:
         update_data = obj_in.model_dump(exclude_unset=True)
         for key, value in update_data.items():
             setattr(db_obj, key, value)
@@ -76,8 +76,8 @@ class CRUDSensor:
 
 
 class CRUDSensorData:
-    def create_multi(self, db: Session, *, objs_in: List[SensorDataCreate]) -> List[SensorData]:
-        db_objs = (SensorData(**obj_in.model_dump()) for obj_in in objs_in)
+    def create_multi(self, db: Session, *, objs_in: List[sensor_schema.SensorDataCreate]) -> List[sensor_model.SensorData]:
+        db_objs = (sensor_model.SensorData(**obj_in.model_dump()) for obj_in in objs_in)
         db.bulk_save_objects(db_objs)
         db.commit()
         return list(db_objs)
@@ -91,19 +91,19 @@ class CRUDSensorData:
         to_date: Optional[datetime] = None,
         skip: int = 0,
         limit: int = 1000 
-    ) -> List[SensorData]:
+    ) -> List[sensor_model.SensorData]:
         """
         Ruft Datenpunkte für einen spezifischen Sensor ab, optional innerhalb eines Zeitraums.
         """
-        query = db.query(SensorData).filter(SensorData.sensor_id == sensor_id)
+        query = db.query(sensor_model.SensorData).filter(sensor_model.SensorData.sensor_id == sensor_id)
 
         if from_date:
-            query = query.filter(SensorData.measurement_timestamp >= from_date)
+            query = query.filter(sensor_model.SensorData.measurement_timestamp >= from_date)
         if to_date:
-            query = query.filter(SensorData.measurement_timestamp <= to_date)
+            query = query.filter(sensor_model.SensorData.measurement_timestamp <= to_date)
 
         # Standardmäßig nach Zeit absteigend sortieren, um die neuesten Daten zuerst zu bekommen
-        query = query.order_by(desc(SensorData.measurement_timestamp))
+        query = query.order_by(desc(sensor_model.SensorData.measurement_timestamp))
 
         return query.offset(skip).limit(limit).all()
     
@@ -178,15 +178,15 @@ class CRUDSensorData:
         Gibt ein einzelnes Dictionary zurück.
         """
         result = db.query(
-            func.avg(SensorData.value).label('average_value'),
-            func.min(SensorData.value).label('min_value'),
-            func.max(SensorData.value).label('max_value'),
-            func.count(SensorData.id).label('count'),
-            func.stddev(SensorData.value).label('stddev_value') 
+            func.avg(sensor_model.SensorData.value).label('average_value'),
+            func.min(sensor_model.SensorData.value).label('min_value'),
+            func.max(sensor_model.SensorData.value).label('max_value'),
+            func.count(sensor_model.SensorData.id).label('count'),
+            func.stddev(sensor_model.SensorData.value).label('stddev_value') 
         ) \
-        .filter(SensorData.sensor_id == sensor_id) \
-        .filter(SensorData.measurement_timestamp >= from_date) \
-        .filter(SensorData.measurement_timestamp < to_date) \
+        .filter(sensor_model.SensorData.sensor_id == sensor_id) \
+        .filter(sensor_model.SensorData.measurement_timestamp >= from_date) \
+        .filter(sensor_model.SensorData.measurement_timestamp < to_date) \
         .one_or_none() 
 
         if result:
@@ -229,15 +229,15 @@ class CRUDSensorData:
 
         agg_func = None
         if aggregation_type.lower() == 'avg':
-            agg_func = func.avg(SensorData.value)
+            agg_func = func.avg(sensor_model.SensorData.value)
         elif aggregation_type.lower() == 'min':
-            agg_func = func.min(SensorData.value)
+            agg_func = func.min(sensor_model.SensorData.value)
         elif aggregation_type.lower() == 'max':
-            agg_func = func.max(SensorData.value)
+            agg_func = func.max(sensor_model.SensorData.value)
         elif aggregation_type.lower() == 'count':
-            agg_func = func.count(SensorData.id)
+            agg_func = func.count(sensor_model.SensorData.id)
         elif aggregation_type.lower() == 'sum':
-             agg_func = func.sum(SensorData.value)
+             agg_func = func.sum(sensor_model.SensorData.value)
 
         if agg_func is None:
              raise ValueError(f"Ungültiger Aggregationstyp nach Validierung: {aggregation_type}")
@@ -247,13 +247,13 @@ class CRUDSensorData:
         time_bucket_func = func.time_bucket_gapfill if interpolation_method is not None else func.time_bucket
 
         aggregated_cte = db.query(
-            time_bucket_func(text(f"INTERVAL '{interval}'"), SensorData.measurement_timestamp).label('time_bucket'),
+            time_bucket_func(text(f"INTERVAL '{interval}'"), sensor_model.SensorData.measurement_timestamp).label('time_bucket'),
             agg_func.label('aggregated_value_raw'),
-            func.count(SensorData.id).label('count') 
+            func.count(sensor_model.SensorData.id).label('count') 
         ) \
-        .filter(SensorData.sensor_id == sensor_id) \
-        .filter(SensorData.measurement_timestamp >= from_date) \
-        .filter(SensorData.measurement_timestamp < to_date) \
+        .filter(sensor_model.SensorData.sensor_id == sensor_id) \
+        .filter(sensor_model.SensorData.measurement_timestamp >= from_date) \
+        .filter(sensor_model.SensorData.measurement_timestamp < to_date) \
         .group_by('time_bucket') \
         .order_by('time_bucket')
 

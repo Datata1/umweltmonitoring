@@ -8,17 +8,14 @@ from datetime import datetime, timedelta, timezone
 
 from utils.db_utils import get_db_session
 
-from utils.db_schema import crud_sensor
-from utils.db_schema import sensor as sensor_schema
+from shared.crud import crud_sensor
+from shared.schemas import sensor as sensor_schema
 from utils.parse_datetime import parse_api_datetime 
 
 
 @task(
     name="Sync Box and Sensors in DB",
     log_prints=True
-    # Retries könnten hier bei transienten DB-Fehlern helfen,
-    # aber bei logischen Fehlern (z.B. ungültige Daten) nicht.
-    # retries=1, retry_delay_seconds=5
 )
 def sync_box_and_sensors_in_db(box_metadata: Dict[str, Any], initial_fetch_days: int) -> Dict[str, Any]:
     """

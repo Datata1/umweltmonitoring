@@ -11,11 +11,10 @@ from datetime import timedelta
 from fastapi.staticfiles import StaticFiles
 from starlette.responses import FileResponse
 
-from app.db.init_db import initialize_database
-from app.db.data_ingestion import fetch_and_store_data
-from app.db.session import SessionLocal
-from app.crud import crud_sensor
+from app.utils.db_session import SessionLocal
 from app.core.config import settings
+from shared.crud import crud_sensor
+
 
 # Router
 from app.api.v1.endpoints import sensors as sensors_router
@@ -45,11 +44,7 @@ scheduler = AsyncIOScheduler()
 async def lifespan(app: FastAPI):
     logger.info("Startup: Initializing database...")
     try:
-        # 1. Datenbankinitialisierung
-        await run_in_threadpool(initialize_database)
-        logger.info("Startup: Database initialization complete.")
-
-        # 2. Initiale Datenbeschaffung (depricated)
+        # 2. Initiale Datenbeschaffung 
         logger.info("Startup: Performing initial data ingestion...")
         db = SessionLocal()
         sensor_box = crud_sensor.sensor_box.get(db, id=settings.SENSOR_BOX_ID)
