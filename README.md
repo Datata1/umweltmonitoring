@@ -68,5 +68,15 @@ sudo docker-compose down --volumes
 - plan frontend design 
 - plan frontend components
 - plan prefect flows for ml workloads
+- set up river in ml workflows fpr online ml
 - add prefect artifacts to flows to debug flows
+- create documentation about architecture
+- create documentation about setting up this project with  docker
+- create documentation about the app
+- create documentation about the ml, how it works and what it does
+- set up minIO for ml models to visualize how the different models in time 
+- frontend/feature: being able to add custom box 
+- frontend/feature: delete box from application
+- prefect/data-ingestion: set it up, so that auto-scheduled data fetching will be set up on initial datafetching (good for new boxes)
+- prefect: change sh script to python script, to create initial deployment and start worker. 
 - add more todos

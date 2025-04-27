@@ -74,4 +74,6 @@ async def data_ingestion_flow(
     # 5. Finalen Box-Status (last_data_fetched) aktualisieren
     update_final_box_status(box_id, to_date, all_fetch_results) 
 
+    # 6. TODO: if initial datafetching, create new deployment with auto-scheduling datafetching for this box
+
     logger.info(f"Flow für Box {box_id} abgeschlossen.") 

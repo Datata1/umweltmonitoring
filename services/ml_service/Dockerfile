@@ -11,7 +11,7 @@ RUN uv  sync
 COPY ./services/ml_service ./app/
 COPY .env ./
 
-COPY ./services/ml_service/utils/prefect_worker.sh /app/utils/prefect_worker.sh
-RUN chmod +x /app/utils/prefect_worker.sh
+COPY ./services/ml_service/utils/prefect_worker.sh /app/ml_service/utils/prefect_worker.sh
+RUN chmod +x /app/ml_service/utils/prefect_worker.sh
 
 
