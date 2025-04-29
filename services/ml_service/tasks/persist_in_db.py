@@ -20,27 +20,6 @@ from utils.parse_datetime import parse_api_datetime
 def sync_box_and_sensors_in_db(box_metadata: Dict[str, Any], initial_fetch_days: int) -> Dict[str, Any]:
     """
     Synchronisiert die Sensorbox und ihre Sensoren mit der Datenbank.
-    - Holt/Erstellt die Box.
-    - Holt/Erstellt die zugehörigen Sensoren.
-    - Aktualisiert 'lastMeasurementAt' der Box basierend auf API-Daten.
-    - Gibt den relevanten DB-Zustand der Box zurück.
-
-    Args:
-        box_metadata: Die von der API geholten Metadaten der Box.
-        initial_fetch_days: Anzahl Tage, die initial zurück geschaut wird
-                              für last_data_fetched bei neuen Boxen.
-
-    Returns:
-        Ein Dictionary mit dem DB-Status, z.B.:
-        { "box_id": str, "db_last_measurement_at": datetime | None,
-          "db_last_data_fetched": datetime | None, "sensor_ids": List[str] }
-        Gibt bei schweren Fehlern eine Exception oder ggf. ein leeres Dict zurück.
-
-    Raises:
-        ValueError: Bei fehlenden oder ungültigen Eingabedaten.
-        RuntimeError: Bei Problemen mit der DB-Session.
-        SQLAlchemyError: Bei Datenbankfehlern während der Operation.
-        Exception: Bei anderen unerwarteten Fehlern.
     """
     logger = get_run_logger()
     box_id = box_metadata.get('_id')
@@ -79,12 +58,12 @@ def sync_box_and_sensors_in_db(box_metadata: Dict[str, Any], initial_fetch_days:
                 try:
                     box_create_payload = {
                         "box_id": box_metadata['_id'],
-                        "name": box_metadata['name'], # Pflichtfeld lt. altem Skript
+                        "name": box_metadata['name'], 
                         "exposure": box_metadata.get('exposure'),
                         "model": box_metadata.get('model'),
                         "currentLocation": box_metadata.get('currentLocation'),
-                        "lastMeasurementAt": api_last_measurement, # Genutze geparste Version
-                        "last_data_fetched": calculated_last_fetched, # Genutze berechnete Version
+                        "lastMeasurementAt": api_last_measurement, 
+                        "last_data_fetched": calculated_last_fetched, 
                         "createdAt": parse_api_datetime(box_metadata.get('createdAt')) or datetime.now(timezone.utc),
                         "updatedAt": parse_api_datetime(box_metadata.get('updatedAt')) or datetime.now(timezone.utc)
                     }
@@ -92,7 +71,7 @@ def sync_box_and_sensors_in_db(box_metadata: Dict[str, Any], initial_fetch_days:
                 except KeyError as e:
                     logger.error(f"[DB Sync] Fehlendes Pflichtfeld '{e}' in API Metadaten für Box Erstellung.")
                     raise ValueError(f"Fehlendes Pflichtfeld '{e}' für Box {box_id}") from e
-                except Exception as e_val: # Fängt Pydantic ValidationErrors etc.
+                except Exception as e_val: 
                      logger.error(f"[DB Sync] Validierungsfehler beim Erstellen des Box Payloads: {e_val}", exc_info=True)
                      raise ValueError(f"Payload Validierungsfehler für Box {box_id}") from e_val
 
@@ -102,21 +81,16 @@ def sync_box_and_sensors_in_db(box_metadata: Dict[str, Any], initial_fetch_days:
                 # Flush ist nötig, damit die Box (und ihre ID) in der Session bekannt ist,
                 # bevor wir versuchen, Sensoren damit zu verknüpfen.
                 db.flush()
-                # Refresh ist gut, um sicherzustellen, dass alle Defaults etc. geladen sind
                 db.refresh(db_sensor_box)
 
             else:
                 logger.info(f"[DB Sync] SensorBox '{box_id}' bereits in DB gefunden.")
 
             # === Schritt 2: Zugehörige Sensoren holen oder erstellen ===
-            # Stelle sicher, dass wir ein gültiges db_sensor_box Objekt haben
             if not db_sensor_box:
                  logger.critical(f"[DB Sync] Interner Fehler: db_sensor_box ist None nach Get/Create für Box {box_id}.")
                  raise RuntimeError(f"Konnte SensorBox Objekt für {box_id} nicht laden/erstellen.")
 
-            # Lade vorhandene Sensoren effizient, falls die Beziehung nicht automatisch geladen wird
-            # Alternativ: explizites Query oder sicherstellen, dass `db_sensor_box.sensors` geladen ist.
-            # Hier gehen wir davon aus, dass crud_sensor.sensor.get prüft oder wir neu laden.
             existing_sensor_ids = {s.sensor_id for s in db_sensor_box.sensors}
             logger.info(f"[DB Sync] Aktuell {len(existing_sensor_ids)} Sensoren für Box {box_id} in DB bekannt.")
 
@@ -144,11 +118,8 @@ def sync_box_and_sensors_in_db(box_metadata: Dict[str, Any], initial_fetch_days:
                              crud_sensor.sensor.create(db, obj_in=sensor_create_schema)
                              sensors_created_count += 1
                          except Exception as e_sensor:
-                             # Wie im Original: Fehler loggen, aber weitermachen?
-                             # Besser wäre es evtl., einen Fehler zu werfen oder zu sammeln.
                              logger.error(f"[DB Sync] Fehler beim Erstellen von Sensor '{api_sensor_id}': {e_sensor}", exc_info=True)
-                             # Wenn ein Sensor fehlschlägt, sollte der ganze Sync fehlschlagen?
-                             # raise ValueError(f"Fehler beim Erstellen von Sensor {api_sensor_id}") from e_sensor
+
 
                 if sensors_created_count > 0:
                      logger.info(f"[DB Sync] {sensors_created_count} neue Sensoren zur Session hinzugefügt.")
@@ -172,8 +143,6 @@ def sync_box_and_sensors_in_db(box_metadata: Dict[str, Any], initial_fetch_days:
                      logger.info(f"[DB Sync] DB.lastMeasurementAt ({db_last_measurement_at_dt}) ist aktuell.")
 
             # === Schritt 4: Rückgabewert vorbereiten ===
-            # Stelle sicher, dass alle benötigten Daten aktuell und geladen sind.
-            # Die Session ist hier noch aktiv.
             final_sensor_ids = [s.sensor_id for s in db_sensor_box.sensors]
             db_state_to_return = {
                 "box_id": db_sensor_box.box_id,
@@ -190,9 +159,8 @@ def sync_box_and_sensors_in_db(box_metadata: Dict[str, Any], initial_fetch_days:
             logger.error(f"[DB Sync] Unerwarteter Fehler während Sync für Box {box_id}: {e_sync}", exc_info=True)
             raise 
 
-    # Session wird hier automatisch commited (bei Erfolg) oder rollbacked (bei Fehler) und geschlossen.
     logger.info(f"[DB Sync] Sync-Task für Box {box_id} abgeschlossen.")
-    return db_state_to_return # Gib den vorbereiteten Status zurück
+    return db_state_to_return 
 
 
 
@@ -208,12 +176,6 @@ def update_final_box_status(
     """
     Aktualisiert den 'last_data_fetched'-Zeitstempel für die SensorBox in der DB,
     basierend auf den Ergebnissen der einzelnen Fetch-Chunks.
-
-    Args:
-        box_id: Die ID der zu aktualisierenden Box.
-        overall_to_date: Das Zieldatum, bis zu dem Daten geholt werden sollten.
-        fetch_results: Eine Liste von Ergebnis-Dictionaries der
-                         fetch_store_sensor_chunk Tasks.
     """
     logger = get_run_logger()
 
@@ -221,15 +183,12 @@ def update_final_box_status(
         logger.warning(f"[Final Status {box_id}] Keine Fetch-Ergebnisse erhalten. Überspringe Update.")
         return
 
-    # 1. Bestimme den Gesamt-Erfolgsstatus und den spätesten erfolgreichen Zeitstempel
     overall_success = all(res.get('success', False) for res in fetch_results)
     latest_successful_ts: datetime | None = None
 
     for res in fetch_results:
-        # Berücksichtige nur erfolgreiche chunks für den letzten Zeitstempel
         if res.get('success') and res.get('last_timestamp_in_chunk'):
             ts = res['last_timestamp_in_chunk']
-            # Ensure ts is datetime and timezone-aware (should be from previous task)
             if isinstance(ts, datetime):
                 ts_utc = ts.astimezone(timezone.utc)
                 if latest_successful_ts is None or ts_utc > latest_successful_ts:
@@ -241,7 +200,6 @@ def update_final_box_status(
     logger.info(f"[Final Status {box_id}] Gesamt-Erfolg der Chunks: {overall_success}")
     logger.info(f"[Final Status {box_id}] Spätester erfolgreicher Zeitstempel: {latest_successful_ts}")
 
-    # 2. Bestimme den Zeitstempel für das Update
     update_ts: datetime | None = None
 
     with get_db_session() as db:
@@ -274,7 +232,6 @@ def update_final_box_status(
             if update_ts and (previous_last_fetched is None or update_ts > previous_last_fetched):
                 logger.info(f"[Final Status {box_id}] Aktualisiere 'last_data_fetched' in DB auf {update_ts}")
                 db_sensor_box.last_data_fetched = update_ts
-                # Commit wird vom Context Manager übernommen
             elif update_ts is not None:
                 logger.info(f"[Final Status {box_id}] Kein Update für 'last_data_fetched' nötig (Neuer Wert {update_ts} nicht später als alter Wert {previous_last_fetched}).")
             else:
@@ -285,6 +242,6 @@ def update_final_box_status(
             raise 
         except Exception as e_final:
             logger.error(f"[Final Status {box_id}] Unerwarteter Fehler während Update: {e_final}", exc_info=True)
-            raise # Lässt Context Manager Rollback ausführen
+            raise 
 
     logger.info(f"[Final Status {box_id}] Update-Task abgeschlossen.")

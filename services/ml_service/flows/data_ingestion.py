@@ -7,6 +7,7 @@ from prefect.artifacts import create_markdown_artifact
 from prefect_dask.task_runners import DaskTaskRunner
 from prefect.futures import PrefectFuture
 
+
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from tasks.fetch_data import fetch_box_metadata, fetch_store_sensor_chunk
@@ -73,7 +74,5 @@ async def data_ingestion_flow(
 
     # 5. Finalen Box-Status (last_data_fetched) aktualisieren
     update_final_box_status(box_id, to_date, all_fetch_results) 
-
-    # 6. TODO: if initial datafetching, create new deployment with auto-scheduling datafetching for this box
 
     logger.info(f"Flow für Box {box_id} abgeschlossen.") 

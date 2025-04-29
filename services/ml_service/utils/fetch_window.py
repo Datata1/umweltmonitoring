@@ -14,30 +14,18 @@ def determine_fetch_window(
     """
     Bestimmt das Zeitfenster (von, bis) für den Abruf von Sensordaten,
     basierend auf dem letzten Abruf und der letzten Messung laut API.
-
-    Args:
-        db_box_state: Der von sync_box_and_sensors_in_db zurückgegebene Status.
-                      Erwartet Schlüssel: 'box_id'(optional für logging), 'db_last_data_fetched'.
-        api_last_measurement_str: Der 'lastMeasurementAt'-String aus den API-Metadaten.
-
-    Returns:
-        Ein Tupel (from_date, to_date). Beide können None sein, wenn kein Abruf nötig ist.
-        Daten sind immer timezone-aware (UTC).
     """
     logger = get_run_logger()
-    box_id = db_box_state.get("box_id", "UNKNOWN") # Für bessere Log-Nachrichten
+    box_id = db_box_state.get("box_id", "UNKNOWN") 
 
     # --- 1. End-Datum bestimmen (to_date) ---
     now_utc = datetime.now(timezone.utc)
     api_last_measurement_dt = parse_api_datetime(api_last_measurement_str)
     logger.info(f"[Fetch Window {box_id}] API Last Measurement: {api_last_measurement_dt}")
 
-    # Nimm den API-Zeitstempel als Ziel, aber nicht später als "jetzt"
-    # Falls API-Zeitstempel fehlt, nimm "jetzt" als Ziel
     target_to_date = api_last_measurement_dt if api_last_measurement_dt else now_utc
     actual_to_date = min(target_to_date, now_utc)
 
-    # Stelle sicher, dass das Datum UTC ist (sollte es durch die Quellen sein)
     actual_to_date = actual_to_date.astimezone(timezone.utc)
     logger.info(f"[Fetch Window {box_id}] Ziel-Enddatum (To Date): {actual_to_date}")
 
@@ -57,7 +45,7 @@ def determine_fetch_window(
     # --- 3. Prüfen, ob Abruf nötig ist ---
     if actual_from_date and actual_from_date >= actual_to_date:
         logger.info(f"[Fetch Window {box_id}] Daten sind aktuell (From >= To). Kein Abruf nötig.")
-        return None, None # Signalisiert dem Flow, dass hier Schluss ist
+        return None, None 
 
     logger.info(f"[Fetch Window {box_id}] Abruf nötig. Fenster: VON '{actual_from_date}' BIS '{actual_to_date}'")
     return actual_from_date, actual_to_date

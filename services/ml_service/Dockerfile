@@ -9,7 +9,7 @@ RUN uv  sync
 
 
 COPY ./services/ml_service ./app/
-COPY .env ./
+COPY .env ./services/ml_service/utils/.env
 
 
 

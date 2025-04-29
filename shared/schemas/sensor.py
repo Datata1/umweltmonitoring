@@ -107,19 +107,19 @@ class SensorDataDailySummaries(BaseModel):
     
 class SensorDataStatistics(BaseModel):
     """ Schema für statistische Kennzahlen eines Sensors in einem Zeitraum """
-    average_value: Optional[float] = None # Optional, falls keine Daten im Zeitraum
+    average_value: Optional[float] = None 
     min_value: Optional[float] = None
     max_value: Optional[float] = None
-    count: int # Anzahl der Datenpunkte (kann 0 sein)
-    stddev_value: Optional[float] = None # Standardabweichung (TimescaleDB/PostgreSQL hat stddev)
+    count: int 
+    stddev_value: Optional[float] = None 
 
     model_config = ConfigDict(from_attributes=True)
 
 class SensorDataAggregatedPoint(BaseModel):
     """ Schema für einen generischen aggregierten Datenpunkt """
-    timestamp: datetime = Field(..., alias="time_bucket") # Nutze alias, um den Spaltennamen 'time_bucket' aus der Query auf 'timestamp' zu mappen
-    aggregated_value: Optional[float] = None # Der aggregierte Wert (kann Avg, Min, Max, Sum sein)
-    count: Optional[int] = None # Nur relevant für 'count' oder Aggregationen, die Anzahl einschließen (z.B. daily summary)
+    timestamp: datetime = Field(..., alias="time_bucket") 
+    aggregated_value: Optional[float] = None 
+    count: Optional[int] = None 
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -127,6 +127,6 @@ class SensorDataAggregatedPoint(BaseModel):
 class SensorDataAggregatedResponse(BaseModel):
     """ Antwortschema für flexible Aggregation mit Einheit """
     unit: str
-    aggregation_type: str # Welcher Aggregationstyp wurde verwendet (z.B. 'avg', 'min')
-    interval: str # Welches Zeitintervall wurde verwendet (z.B. '1h', '1d')
+    aggregation_type: str 
+    interval: str 
     aggregated_data: List[SensorDataAggregatedPoint]

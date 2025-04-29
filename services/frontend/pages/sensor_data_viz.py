@@ -22,14 +22,13 @@ layout = html.Div([
     html.Div(id='plot-container'), # Dieses Div wird den Graphen enthalten
 
     dcc.Loading(
-        id="loading-plot-data", # Eindeutige ID für die Loading-Komponente
-        type="graph", # Typ des Spinners ('default', 'circle', 'dot', 'graph')
-        fullscreen=False, # Setze auf True für einen Vollbild-Spinner
+        id="loading-plot-data", 
+        type="graph", 
+        fullscreen=False, 
         children=html.Div(id='plot-container') ,
         className="loading-container" 
     ),
 ])
-
 
 
 # Callback, der das Laden der Daten und die Erstellung des Graphen auslöst
@@ -39,7 +38,7 @@ layout = html.Div([
               Input('page-content', 'children'), # <-- Trigger ist die Änderung des Hauptinhalts-Divs in app.py
               State('url', 'pathname'), # <-- Hole die aktuelle URL, um zu prüfen, welche Seite aktiv ist
               # Füge hier State/Input für Sensor-Auswahl und Datumsbereich hinzu, sobald Bedienelemente da sind
-              prevent_initial_call=False) # Lässt den Callback beim ersten Laden der Seite auslösen
+              prevent_initial_call=False) 
 def load_plot_data_on_page_load(page_content_children, pathname): 
     logger.info(f"load_plot_data_on_page_load triggered. Pathname: {pathname}")
 

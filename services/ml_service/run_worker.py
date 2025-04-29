@@ -1,38 +1,30 @@
 import asyncio
 import sys
+import requests
+import uuid
 from pathlib import Path
 
-from prefect import get_client
+from prefect import get_client, deploy
 from prefect.server.schemas.actions import WorkPoolCreate
 from prefect.exceptions import ObjectNotFound
 from prefect.workers.process import ProcessWorker
 from prefect.filesystems import LocalFileSystem 
+from prefect.deployments.runner import RunnerDeployment
+
+from flows.data_ingestion import data_ingestion_flow as target_flow
 
 # --- Konfiguration --- TODO: hole die konfigurationen aus .env oder utils.config.settings()
 WORK_POOL_NAME = "timeseries"
 DEPLOYMENT_NAME = "timeseries-data-ingestion"
 FLOW_SCRIPT_PATH = Path("./flows/data_ingestion.py") 
 FLOW_FUNCTION_NAME = "data_ingestion_flow" 
-FLOW_ENTRYPOINT = f"flows/data_ingestion.py:{FLOW_FUNCTION_NAME}" 
-APP_BASE_PATH = Path("/app") 
+FLOW_ENTRYPOINT = f"./flows/data_ingestion.py:{FLOW_FUNCTION_NAME}" 
+APP_BASE_PATH = Path("/app/ml_service/") 
 DEFAULT_BOX_ID = "5faeb5589b2df8001b980304"
 INITIAL_FETCH_DAYS = 7
 CHUNK_DAYS = 2
 INTERVAL_SECONDS = 180
 
-
-try:
-    from flows.data_ingestion import data_ingestion_flow as target_flow
-
-    if not hasattr(target_flow, 'deploy'):
-         raise TypeError("Das importierte Objekt 'target_flow' ist kein gültiger Prefect Flow oder hat keine 'deploy' Methode.")
-
-except ImportError as e:
-    print(f"FEHLER: Konnte den Flow nicht importieren von 'flows.data_ingestion'. Stelle sicher, dass der Pfad korrekt ist ({FLOW_ENTRYPOINT}) und das Basisverzeichnis ({APP_BASE_PATH}) im Python-Pfad ist oder die Imports relativ korrekt sind. Fehler: {e}", file=sys.stderr)
-    sys.exit(1)
-except TypeError as e:
-    print(f"FEHLER: {e}", file=sys.stderr)
-    sys.exit(1)
 
 async def create_or_get_work_pool(client, name: str):
     print(f"Prüfe Work Pool '{name}'...")
@@ -57,35 +49,6 @@ async def create_or_get_work_pool(client, name: str):
                      print(f"Server Response (raw): {await e.response.text()}", file=sys.stderr)
             sys.exit(1)
 
-async def deploy_flow_with_method(flow_obj, deployment_name, work_pool_name, interval_seconds, params, tags, description):
-    """Erstellt oder aktualisiert ein Deployment mit der flow.deploy() Methode."""
-    print(f"Erstelle/Aktualisiere Deployment '{deployment_name}' mit flow.deploy() Methode...")
-    try:
-        # source: https://orion-docs.prefect.io/latest/api-ref/prefect/flows/#prefect.flows.Flow.to_deployment
-        # source: https://linen.prefect.io/t/26784682/ulva73b9p-i-am-trying-to-create-a-local-deployment-from-a-fl
-        deployment_id = await flow_obj.to_deployment(
-            deployment_name, 
-            work_pool_name=work_pool_name,
-            interval=interval_seconds,
-            parameters=params,
-            tags=tags,
-            description=description,
-        )
-
-        if not deployment_id:
-             raise RuntimeError("Deployment fehlgeschlagen, keine Deployment-ID zurückgegeben.")
-
-        print(f"Deployment '{deployment_name}' (ID: {deployment_id}) erfolgreich konfiguriert.")
-        return deployment_id
-    except Exception as e:
-        print(f"FEHLER: Konnte Deployment '{deployment_name}' nicht erstellen/aktualisieren: {e}", file=sys.stderr)
-        if hasattr(e, 'response') and e.response:
-            try:
-                error_detail = await e.response.json()
-                print(f"Server Response: {error_detail}", file=sys.stderr)
-            except:
-                 print(f"Server Response (raw): {await e.response.text()}", file=sys.stderr)
-        sys.exit(1)
 
 
 async def main():
@@ -94,33 +57,48 @@ async def main():
         # --- Work Pool sicherstellen ---
         await create_or_get_work_pool(client, WORK_POOL_NAME)
 
-    # --- Speicherort definieren ---
-    storage_block = LocalFileSystem(
-        basepath=APP_BASE_PATH
-    )
-    await storage_block.save(
-        name="local-storage",
-        overwrite=True
-    )
+        # --- Deployment erstellen/aktualisieren ---
+        deployment_params = {
+            "box_id": DEFAULT_BOX_ID,
+            "initial_fetch_days": INITIAL_FETCH_DAYS,
+            "fetch_chunk_days": CHUNK_DAYS,
+        }
+        schedule_payload = [
+            {
+                "schedule": {
+                    "interval": INTERVAL_SECONDS         
+                },
+            }
+        ]
+        deployment_tags = ["ingestion", "opensensemap", "scheduled"]
+        deployment_description = f"Holt alle {INTERVAL_SECONDS // 60} Minuten Daten von OpenSenseMap für Box {DEFAULT_BOX_ID}"
 
-    # --- Deployment erstellen/aktualisieren ---
-    deployment_params = {
-        "box_id": DEFAULT_BOX_ID,
-        "initial_fetch_days": INITIAL_FETCH_DAYS,
-        "fetch_chunk_days": CHUNK_DAYS,
-    }
-    deployment_tags = ["ingestion", "opensensemap", "scheduled"]
-    deployment_description = f"Holt alle {INTERVAL_SECONDS // 60} Minuten Daten von OpenSenseMap für Box {DEFAULT_BOX_ID}"
+        flow_id = await client.create_flow_from_name(FLOW_FUNCTION_NAME)
+        flow_id_str = str(flow_id)
+        print(flow_id)
+        print(flow_id_str)
 
-    await deploy_flow_with_method(
-        flow_obj=target_flow, 
-        deployment_name=DEPLOYMENT_NAME,
-        work_pool_name=WORK_POOL_NAME,
-        interval_seconds=INTERVAL_SECONDS,
-        params=deployment_params,
-        tags=deployment_tags,
-        description=deployment_description
-    )
+        # --- Deployment erstellen ---
+        deployment = requests.post(
+            f"http://prefect:4200/api/deployments",
+            json={
+                "name": DEPLOYMENT_NAME,
+                "flow_id": flow_id_str,
+                "work_pool_name": WORK_POOL_NAME,
+                "entrypoint": FLOW_ENTRYPOINT,
+                "path": str(APP_BASE_PATH),
+                "parameter_openapi_schema": deployment_params,
+                "schedules": schedule_payload,
+                "tags": deployment_tags,
+                "description": deployment_description,
+            },
+            headers={"Content-Type": "application/json"},
+        )
+        print(deployment.status_code)
+        if deployment.status_code != 201 or deployment.status_code != 200:
+            print(f"FEHLER: Konnte Deployment '{DEPLOYMENT_NAME}' nicht erstellen: {deployment.text}", file=sys.stderr)
+        else:
+            print(f"Deployment '{DEPLOYMENT_NAME}' (ID: {deployment}) erfolgreich erstellt.")
 
     # --- Worker starten ---
     print(f"Starte Worker für Pool '{WORK_POOL_NAME}'...")

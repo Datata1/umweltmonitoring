@@ -57,7 +57,7 @@ async def lifespan(app: FastAPI):
         db.close()
 
         if not box_exists_in_db:
-            flow_name = "data-ingestion-flow"  
+            flow_name = "data_ingestion_flow"  
             deployment_name_only = "timeseries-data-ingestion"
             full_deployment_identifier = f"{flow_name}/{deployment_name_only}"
             logger.warning(f"SensorBox '{settings.SENSOR_BOX_ID}' nicht gefunden. Starte initialen Prefect Flow Run über Deployment '{full_deployment_identifier}'...")

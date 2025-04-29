@@ -9,7 +9,6 @@ logger = logging.getLogger(__name__)
 
 from components.plot import create_time_series_graph
 
-
 # Annahme: Die Backend URL kommt aus Umgebungsvariablen
 BACKEND_API_URL = os.environ.get("BACKEND_API_URL", "http://localhost:3000") 
 
@@ -21,8 +20,8 @@ def get_sensor_boxes():
         response = requests.get(url)
         response.raise_for_status() # Wirft HTTPError für schlechte Antworten
         data = response.json()
-        logger.info(f"Received data from backend (first 100 chars): {str(data)[:100]}...") # Logge nur einen Teil der Daten
-        return data # Rückgabe der Daten (erwartet wird eine Liste durch response_model)
+        logger.info(f"Received data from backend (first 100 chars): {str(data)[:100]}...") 
+        return data 
     except requests.exceptions.RequestException as e:
         logger.error(f"Error fetching sensor boxes from backend: {e}", exc_info=True)
         raise # Fehler weitergeben
@@ -40,22 +39,21 @@ def get_aggregated_data(sensor_id: str, from_date: datetime, to_date: datetime, 
     to_date_str = to_date_utc.strftime('%Y-%m-%dT%H:%M:%SZ')
 
     params = {
-        "from-date": from_date_str, # Query Parameter Name vom Backend Endpunkt
-        "to-date": to_date_str,     # Query Parameter Name vom Backend Endpunkt
-        **aggregation_params # Füge die anderen Parameter wie interval, aggregation_type, smoothing, interpolation hinzu
+        "from-date": from_date_str, 
+        "to-date": to_date_str,    
+        **aggregation_params 
     }
 
     logger.info(f"Requesting aggregated data from backend: {url} with params {params}")
     try:
         response = requests.get(url, params=params)
-        response.raise_for_status() # Wirft HTTPError für schlechte Antworten
-        # Erwartet ein Dictionary mit 'unit', 'aggregation_type', 'interval', 'aggregated_data'
+        response.raise_for_status() 
         data = response.json() 
         logger.info(f"Received aggregated data from backend (first 100 chars): {str(data)[:100]}...")
-        return data # Gibt das erhaltene Dictionary zurück
+        return data 
     except requests.exceptions.RequestException as e:
         logger.error(f"Error fetching aggregated data from backend: {e}", exc_info=True)
-        raise # Fehler weitergeben
+        raise 
 
 def fetch_and_create_plot_component(sensor_id: str, from_date: datetime, to_date: datetime, aggregation_params: dict):
     """
@@ -63,26 +61,22 @@ def fetch_and_create_plot_component(sensor_id: str, from_date: datetime, to_date
     """
     logger.info(f"Fetching plot data for sensor {sensor_id} from {from_date} to {to_date}.")
     try:
-        # Daten vom Backend API abrufen (Aufruf deiner Backend-Endpunkte)
-        # Annahme: api_client.get_aggregated_data existiert und ruft deinen /aggregate/ Endpunkt auf
         plot_data_response = get_aggregated_data(sensor_id, from_date, to_date, aggregation_params) 
 
-        # Das Backend sollte ein Dictionary mit 'unit', 'aggregation_type', 'interval', 'aggregated_data' zurückgeben
         if plot_data_response and 'aggregated_data' in plot_data_response and 'unit' in plot_data_response:
             aggregated_data_list = plot_data_response['aggregated_data']
             unit = plot_data_response['unit']
-            aggregation_type = plot_data_response.get('aggregation_type', 'value') # Standardlabel falls fehlt
+            aggregation_type = plot_data_response.get('aggregation_type', 'value') 
 
-            if aggregated_data_list: # Prüfe, ob die Liste der Datenpunkte nicht leer ist
+            if aggregated_data_list: 
                  logger.info(f"Received {len(aggregated_data_list)} aggregated data points.")
-                 # Erstelle die Graphen-Komponente mit den abgerufenen Daten
                  return create_time_series_graph(
-                     id='main-time-series-graph', # Eindeutige ID für die Komponente
-                     title=f"Sensor Data ({aggregation_type.capitalize()})", # Titel aus Aggregationstyp
+                     id='main-time-series-graph', 
+                     title=f"Sensor Data ({aggregation_type.capitalize()})", 
                      data=aggregated_data_list,
-                     x_col='time_bucket', # Spaltenname im aggregierten Ergebnis (aus deinem Schema)
-                     y_col='aggregated_value', # Spaltenname im aggregierten Ergebnis (aus deinem Schema)
-                     y_axis_label=f"Value ({unit})" # Label mit Einheit
+                     x_col='time_bucket', 
+                     y_col='aggregated_value', 
+                     y_axis_label=f"Value ({unit})" 
                  )
             else:
                  logger.info("API returned an empty list of aggregated data points.")

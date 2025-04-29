@@ -26,14 +26,12 @@ from maindash import app
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
-    html.Div([ # Gesamtcontainer
-        # Toggle Button für die Seitenleiste
+    html.Div([ 
         html.Button(html.Img(src="/assets/icons/menu.svg", className="icon me-2", alt="Menu"), id="sidebar-toggle", className="sidebar-toggle"), # Button für Ein-/Ausklappen
-        create_sidebar(), # Seitenleiste (Muss eine ID haben: 'sidebar')
-        html.Div(id='page-content', className="content"), # Hauptinhaltsbereich
+        create_sidebar(), 
+        html.Div(id='page-content', className="content"), 
     ], className="container-fluid"),
 ])
-
 
 # Callback zur Navigation zwischen den Seiten
 @app.callback(Output('page-content', 'children'),

@@ -78,5 +78,4 @@ sudo docker-compose down --volumes
 - frontend/feature: being able to add custom box 
 - frontend/feature: delete box from application
 - prefect/data-ingestion: set it up, so that auto-scheduled data fetching will be set up on initial datafetching (good for new boxes)
-- prefect: change sh script to python script, to create initial deployment and start worker. 
 - add more todos

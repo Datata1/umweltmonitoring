@@ -1,15 +1,13 @@
 # tasks/fetch_data.py
 
 import requests
-from typing import Dict, Any, List # List hinzugefügt
+from typing import Dict, Any, List 
 from prefect import task, get_run_logger
-from datetime import datetime, timezone, timedelta # timedelta hinzugefügt (optional, falls intern benötigt)
-from sqlalchemy.exc import SQLAlchemyError # Import für DB Fehler
+from datetime import datetime, timezone, timedelta 
+from sqlalchemy.exc import SQLAlchemyError 
 
-# Importiere DB session utility
 from utils.db_utils import get_db_session
 
-# Importiere deine Anwendungsmodule (Pfade ggf. anpassen)
 from shared.crud import crud_sensor
 from shared.schemas import sensor as sensor_schema
 from utils.parse_datetime import parse_api_datetime
@@ -25,16 +23,6 @@ OPEN_SENSE_MAP_API_URL = "https://api.opensensemap.org"
 def fetch_box_metadata(box_id: str) -> Dict[str, Any]:
     """
     Holt Metadaten für eine spezifische Sensorbox von der OpenSenseMap API.
-
-    Args:
-        box_id: Die ID der abzurufenden Sensorbox.
-
-    Returns:
-        Ein Dictionary mit den JSON-Daten der API-Antwort.
-
-    Raises:
-        requests.exceptions.RequestException: Wenn ein Netzwerk- oder HTTP-Fehler auftritt.
-        ValueError: Wenn die API-Antwort kein valides JSON ist oder die box_id fehlt.
     """
     logger = get_run_logger()
 
@@ -46,7 +34,7 @@ def fetch_box_metadata(box_id: str) -> Dict[str, Any]:
     logger.info(f"Hole Metadaten für Box ID: {box_id} von API: {api_url}")
 
     try:
-        response = requests.get(api_url, timeout=30) # Timeout setzen!
+        response = requests.get(api_url, timeout=30) 
 
         response.raise_for_status()
 
@@ -82,8 +70,8 @@ def fetch_box_metadata(box_id: str) -> Dict[str, Any]:
 
 @task(
     name="Fetch and Store Sensor Chunk",
-    retries=2,                  # Weniger Retries als Metadaten? Datenabruf kann fehlschlagen.
-    retry_delay_seconds=15,     # Etwas längere Wartezeit
+    retries=2,                 
+    retry_delay_seconds=15,     
     log_prints=True
 )
 def fetch_store_sensor_chunk(
@@ -94,39 +82,25 @@ def fetch_store_sensor_chunk(
 ) -> Dict[str, Any]:
     """
     Holt, parst und speichert Messdaten für einen Sensor in einem Zeit-Chunk.
-
-    Args:
-        sensor_id: Die ID des Sensors.
-        box_id: Die ID der Box.
-        chunk_from_date: Startzeitpunkt des Chunks (sollte UTC sein).
-        chunk_to_date: Endzeitpunkt des Chunks (sollte UTC sein).
-
-    Returns:
-        Ein Ergebnis-Dictionary:
-        { "sensor_id": str, "chunk_from": datetime, "chunk_to": datetime,
-          "success": bool, "points_fetched": int, "last_timestamp_in_chunk": datetime | None }
     """
     logger = get_run_logger()
-    # Initialisiere das Ergebnis-Dictionary (Erfolg ist standardmäßig False)
     result = {
         "sensor_id": sensor_id,
         "chunk_from": chunk_from_date,
         "chunk_to": chunk_to_date,
         "success": False,
         "points_fetched": 0,
-        "last_timestamp_in_chunk": None # Zeitstempel des letzten erfolgreich verarbeiteten Punkts in diesem Chunk
+        "last_timestamp_in_chunk": None 
     }
 
     # Stelle sicher, dass Datumsangaben Timezone-aware sind und formatiere für API
     try:
-        # Konvertiere explizit nach UTC und formatiere
         from_date_str = chunk_from_date.astimezone(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
         to_date_str = chunk_to_date.astimezone(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
     except AttributeError:
         logger.error(f"[Chunk {sensor_id}] Ungültige Datums-Objekte empfangen: From={chunk_from_date}, To={chunk_to_date}")
-        return result # Gib das Fehler-Standardergebnis zurück
+        return result 
 
-    # Baue API URL und Parameter
     api_url = f"{OPEN_SENSE_MAP_API_URL}/boxes/{box_id}/data/{sensor_id}"
     params = {"from-date": from_date_str, "to-date": to_date_str, "format": "json"}
     logger.info(f"[Chunk {sensor_id}] API Request: Von {from_date_str} Bis {to_date_str}")
@@ -136,8 +110,8 @@ def fetch_store_sensor_chunk(
 
     try:
         # === Schritt 1: API-Aufruf ===
-        response = requests.get(api_url, params=params, timeout=60) # Längerer Timeout für Daten?
-        response.raise_for_status() # Prüft auf HTTP-Fehler
+        response = requests.get(api_url, params=params, timeout=60)
+        response.raise_for_status() 
         sensor_measurements = response.json()
         logger.info(f"[Chunk {sensor_id}] API Antwort: {len(sensor_measurements)} Punkte erhalten.")
 
@@ -148,7 +122,6 @@ def fetch_store_sensor_chunk(
                     ts = parse_api_datetime(measurement.get('createdAt'))
                     val_str = measurement.get('value')
 
-                    # Überspringe, wenn Zeitstempel oder Wert fehlen
                     if ts is None or val_str is None:
                         logger.warning(f"[Chunk {sensor_id}] Überspringe Messwert wegen fehlendem Datum/Wert: {measurement}")
                         continue
@@ -161,9 +134,9 @@ def fetch_store_sensor_chunk(
 
                     # Erstelle Pydantic Schema für DB-Einfügung
                     all_sensor_data_schemas.append(sensor_schema.SensorDataCreate(
-                        sensor_id=sensor_id, # Sensor ID dieses Tasks
+                        sensor_id=sensor_id, 
                         value=val,
-                        measurement_timestamp=ts_utc # Immer UTC speichern
+                        measurement_timestamp=ts_utc 
                     ))
 
                     # Merke dir den letzten Zeitstempel dieses Chunks
@@ -171,7 +144,6 @@ def fetch_store_sensor_chunk(
                         batch_latest_ts = ts_utc
 
                 except (ValueError, TypeError, KeyError) as e_meas:
-                    # Fehler beim Parsen/Validieren eines einzelnen Messwerts
                     logger.warning(f"[Chunk {sensor_id}] Überspringe ungültigen Messwert: {measurement}. Fehler: {e_meas}")
                     continue
 
@@ -180,7 +152,6 @@ def fetch_store_sensor_chunk(
                 with get_db_session() as db:
                     if db is None:
                         logger.error(f"[Chunk {sensor_id}] Konnte keine DB-Session zum Speichern erhalten.")
-                        # Hier nicht einfach weitermachen, der Task ist fehlgeschlagen
                         raise RuntimeError("DB Session nicht verfügbar zum Speichern.")
 
                     try:
@@ -208,7 +179,7 @@ def fetch_store_sensor_chunk(
         raise http_err
     except requests.exceptions.RequestException as req_err:
         logger.error(f"[Chunk {sensor_id}] Request Fehler: {req_err}")
-        raise req_err # Fehler weitergeben -> Task Fail / Retry
+        raise req_err 
     except ValueError as val_err: 
          logger.error(f"[Chunk {sensor_id}] Daten-Validierungsfehler: {val_err}", exc_info=True)
          raise val_err #

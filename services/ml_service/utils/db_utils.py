@@ -20,13 +20,11 @@ else:
     try:
         # Erstelle die Engine einmal beim Laden des Moduls.
         # Die Engine verwaltet den Connection Pool.
-        # Passe pool_size etc. an deine erwartete Parallelität an.
         engine = create_engine(
             DATABASE_URL,
-            pool_pre_ping=True,  # Prüft Verbindungen vor der Nutzung
-            echo=False,          # SQL-Logging aus (in Tasks meist unerwünscht)
-            pool_size=5,         # Beispiel: Max 5 Verbindungen im Pool
-            max_overflow=10      # Beispiel: Erlaube 10 zusätzliche Verbindungen unter Last
+            pool_pre_ping=True,  
+            pool_size=5,        
+            max_overflow=10      
         )
 
         SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -44,18 +42,11 @@ def get_db_session() -> Iterator[Session | None]:
     """
     Stellt eine SQLAlchemy Session für die Nutzung in einem Task bereit.
     Handhabt Commit, Rollback und Schließen der Session.
-
-    Verwendung:
-        with get_db_session() as db:
-            if db:
-                # ... deine Datenbankoperationen mit 'db' ...
-            else:
-                # Fehlerbehandlung, wenn keine Session erstellt werden konnte
     """
     task_logger = get_run_logger() 
     if SessionLocal is None:
         task_logger.error("SessionLocal ist nicht initialisiert. Engine-Erstellung fehlgeschlagen?")
-        yield None # Wichtig: yield None, damit der 'with'-Block es prüfen kann
+        yield None 
         return
 
     session = SessionLocal()

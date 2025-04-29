@@ -107,8 +107,8 @@ def read_sensor_data(
 @cache(expire=900, key_builder=summary_stats_key_builder) 
 def read_sensor_data_daily_summary(
     sensor_id: str,
-    from_date: datetime = Query(..., alias="from-date", description="Start date for aggregation (RFC3339 format)"), # Füge alias="from-date" hinzu
-    to_date: datetime = Query(..., alias="to-date", description="End date for aggregation (RFC3339 format)"),     # Füge alias="to-date" hinzu
+    from_date: datetime = Query(..., alias="from-date", description="Start date for aggregation (RFC3339 format)"), 
+    to_date: datetime = Query(..., alias="to-date", description="End date for aggregation (RFC3339 format)"),     
     db: Session = Depends(get_db)
 ):
     """

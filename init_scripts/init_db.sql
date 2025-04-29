@@ -1,20 +1,13 @@
 -- init_db.sql
 
--- Setzt den Standard-Schema-Pfad, falls nötig.
 SET search_path TO public;
 
--- CREATE DATABASE IF NOT EXISTS umwelt;
-
-
--- Erstelle die Prefect-Datenbank, falls sie nicht existiert
 CREATE DATABASE prefect;
-
 
 \connect umwelt;
 
 -- 1. TimescaleDB Extension erstellen (falls nötig)
 CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
--- Beachte: `CASCADE` installiert alle abhängigen Objekte, die für TimescaleDB benötigt werden.
 
 -- 2. Tabellen erstellen (basierend auf den SQLAlchemy-Modellen)
 -- Reihenfolge beachten: sensor_box -> sensor -> sensor_data wegen Fremdschlüsseln
@@ -70,7 +63,7 @@ BEGIN
             'measurement_timestamp', 
             'sensor_id',             
             8,                       
-            chunk_time_interval => INTERVAL '1 day', -- Benanntes Argument
+            chunk_time_interval => INTERVAL '1 day', 
             migrate_data => TRUE     
         );
         RAISE INFO 'sensor_data converted to hypertable.';
@@ -81,9 +74,6 @@ END
 $$;
 
 -- 4. Kontinuierliche Aggregate (Materialized Views) erstellen (basierend auf den Table-Definitionen)
--- Diese Views aggregieren Daten aus der hypertable sensor_data.
-
--- Stündliche Durchschnittswerte
 CREATE MATERIALIZED VIEW IF NOT EXISTS sensor_data_hourly_avg
 WITH (timescaledb.continuous) AS
 SELECT
@@ -155,36 +145,30 @@ WITH NO DATA;
 -- Optional: Setze TimescaleDB Policies für die kontinuierlichen Aggregate
 -- WICHTIG: start_offset - end_offset MUSS >= 2 * Bucket-Größe sein!
 
--- Stündliche Durchschnittswerte (Bucket-Größe: 1 Stunde) -> Fenster >= 2 Stunden
--- Aktualisiere Daten zwischen 3 Stunden und 1 Stunde alt.
 SELECT add_continuous_aggregate_policy('sensor_data_hourly_avg',
   start_offset => INTERVAL '3 hours', -- Beispiel: Daten älter als 3 Stunden
   end_offset => INTERVAL '1 hour',   -- Beispiel: Daten neuer als 1 Stunde (Fenster ist [start, end) )
   schedule_interval => INTERVAL '5 minutes');
 
--- Tägliche Durchschnittswerte (Bucket-Größe: 1 Tag) -> Fenster >= 2 Tage
--- Aktualisiere Daten zwischen 3 Tagen und 1 Tag alt.
+
 SELECT add_continuous_aggregate_policy('sensor_data_daily_avg',
   start_offset => INTERVAL '3 days',
   end_offset => INTERVAL '1 day',
   schedule_interval => INTERVAL '15 minutes'); 
 
--- Wöchentliche Durchschnittswerte (Bucket-Größe: 1 Woche) -> Fenster >= 2 Wochen
--- Aktualisiere Daten zwischen 3 Wochen und 1 Woche alt.
+
 SELECT add_continuous_aggregate_policy('sensor_data_weekly_avg',
   start_offset => INTERVAL '3 weeks',
   end_offset => INTERVAL '1 week',
   schedule_interval => INTERVAL '1 hour'); 
 
--- Monatliche Durchschnittswerte (Bucket-Größe: 1 Monat) -> Fenster >= 2 Monate
--- Aktualisiere Daten zwischen 3 Monaten und 1 Monat alt.
+
 SELECT add_continuous_aggregate_policy('sensor_data_monthly_avg',
   start_offset => INTERVAL '3 months',
   end_offset => INTERVAL '1 month',
   schedule_interval => INTERVAL '6 hours'); 
 
--- Tägliche Zusammenfassungen (Bucket-Größe: 1 Tag) -> Fenster >= 2 Tage
--- Aktualisiere Daten zwischen 3 Tagen und 1 Tag alt.
+
 SELECT add_continuous_aggregate_policy('sensor_data_daily_summary_agg',
   start_offset => INTERVAL '3 days',
   end_offset => INTERVAL '1 day',
