@@ -97,7 +97,7 @@ services:
       - ./services/ml_service:/app/ml_service 
       - ./shared:/app/ml_service/shared
     working_dir: /app/ml_service 
-    command: "./utils/prefect_worker.sh"
+    command: "uv run python run_worker.py"
     environment:
       - PREFECT_API_URL=http://prefect:4200/api
       - DATABASE_URL_PREFECT=postgresql+asyncpg://${DB_USER}:${DB_PASSWORD}@db:${DB_PORT}/${PREFECT_DB_NAME}
