@@ -7,24 +7,42 @@ logger = logging.getLogger(__name__)
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import dash
-from dash import dcc
-from dash import html
+import dash
+from dash import dcc, html
 from dash.dependencies import Input, Output, State
 
 from maindash import app
-from utils import api_client 
+from utils import api_client
 
+# Layout
 layout = html.Div([
     html.H1("Sensor Boxen"),
-    html.Div(id='sensor-box-list-container'), 
+    
+    html.Div(id='sensor-box-list-container'),
 
-    dcc.Loading(id="loading-sensor-boxes", type="default", children=html.Div(id="loading-output")),
+    dcc.Loading(
+        id="loading-sensor-boxes",
+        type="default",
+        children=html.Div(id="loading-output")
+    ),
+
+    html.H2("Standortkarte"),
+
+    html.Iframe(
+        src="https://opensensemap.org/explore/5faeb5589b2df8001b980304",
+        width="900",
+        height="600",
+        style={"border": "0"}
+    )
 ])
 
-@app.callback(Output('sensor-box-list-container', 'children'), 
-              Input('page-content', 'children'), 
-              State('url', 'pathname'), 
-              prevent_initial_call=False) 
+# Callback
+@app.callback(
+    Output('sensor-box-list-container', 'children'),
+    Input('page-content', 'children'),
+    State('url', 'pathname'),
+    prevent_initial_call=False
+)
 def trigger_data_load_for_sensor_box_list(page_content_children, pathname):
     logger.info(f"trigger_data_load_for_sensor_box_list triggered. Pathname: {pathname}")
     if pathname == '/sensor_boxes':
