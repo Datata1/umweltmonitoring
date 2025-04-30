@@ -74,31 +74,26 @@ async def main():
         deployment_description = f"Holt alle {INTERVAL_SECONDS // 60} Minuten Daten von OpenSenseMap für Box {DEFAULT_BOX_ID}"
 
         flow_id = await client.create_flow_from_name(FLOW_FUNCTION_NAME)
-        flow_id_str = str(flow_id)
-        print(flow_id)
-        print(flow_id_str)
 
         # --- Deployment erstellen ---
         deployment = requests.post(
             f"http://prefect:4200/api/deployments",
             json={
                 "name": DEPLOYMENT_NAME,
-                "flow_id": flow_id_str,
+                "flow_id": str(flow_id),  # requests cant handle uuid 
                 "work_pool_name": WORK_POOL_NAME,
                 "entrypoint": FLOW_ENTRYPOINT,
-                "path": str(APP_BASE_PATH),
+                "path": str(APP_BASE_PATH),  # reguetsts cant handle Path objects
                 "parameter_openapi_schema": deployment_params,
+                "parameters": deployment_params,
                 "schedules": schedule_payload,
                 "tags": deployment_tags,
                 "description": deployment_description,
             },
             headers={"Content-Type": "application/json"},
         )
-        print(deployment.status_code)
-        if deployment.status_code != 201 or deployment.status_code != 200:
-            print(f"FEHLER: Konnte Deployment '{DEPLOYMENT_NAME}' nicht erstellen: {deployment.text}", file=sys.stderr)
-        else:
-            print(f"Deployment '{DEPLOYMENT_NAME}' (ID: {deployment}) erfolgreich erstellt.")
+
+    print(f"Deployment '{DEPLOYMENT_NAME}' (ID: {deployment}) erfolgreich erstellt.")
 
     # --- Worker starten ---
     print(f"Starte Worker für Pool '{WORK_POOL_NAME}'...")
