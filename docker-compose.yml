@@ -96,6 +96,7 @@ services:
     volumes:
       - ./services/ml_service:/app/ml_service 
       - ./shared:/app/ml_service/shared
+      - ./host_models_dir:/app/ml_service/models
     working_dir: /app/ml_service 
     command: "uv run python run_worker.py"
     environment:

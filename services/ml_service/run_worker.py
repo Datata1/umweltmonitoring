@@ -123,6 +123,34 @@ async def main():
 
         print(f"Deployment '{DEPLOYMENT_NAME}' (ID: {deployment}) erfolgreich erstellt.")
 
+        # --- Deployment ml_training ---
+        deployment_tags = ["forecast"]
+        deployment_description = f"Erstellt predictions"
+
+        deployment_params = {
+        }
+
+        flow_id = await client.create_flow_from_name("generate_forecast_flow")
+
+        # --- Deployment erstellen ---
+        deployment = requests.post(
+            f"http://prefect:4200/api/deployments",
+            json={
+                "name": "create_forecast",
+                "flow_id": str(flow_id),  
+                "work_pool_name": WORK_POOL_NAME,
+                "entrypoint": f"./flows/generate_forecast.py:{'generate_forecast_flow'}",
+                "path": str(APP_BASE_PATH),  
+                "parameter_openapi_schema": deployment_params,
+                "parameters": deployment_params,
+                "tags": deployment_tags,
+                "description": deployment_description,
+            },
+            headers={"Content-Type": "application/json"},
+        )
+
+        print(f"Deployment '{DEPLOYMENT_NAME}' (ID: {deployment}) erfolgreich erstellt.")
+
     # --- Worker starten ---
     print(f"Starte Worker für Pool '{WORK_POOL_NAME}'...")
     try:

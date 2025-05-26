@@ -202,11 +202,9 @@ settings = SimpleSettings()
 
 @task(
     name="Get Sensor Data for ML",
-    description="Fetches sensor data for the last two weeks from the backend API for ML training.",
-    retries=3, 
-    retry_delay_seconds=10 
+    description="Fetches sensor data for the last two weeks from the backend API for ML training."
 )
-def fetch_sensor_data_for_ml() -> pd.DataFrame:
+def fetch_sensor_data_for_ml(weeks: int = 8) -> pd.DataFrame:
     """
     Holt Sensordaten der letzten zwei Wochen bis zum aktuellen Zeitpunkt von der API
     und speichert sie in einem Pandas DataFrame.
@@ -215,18 +213,18 @@ def fetch_sensor_data_for_ml() -> pd.DataFrame:
     base_url = settings.API_BASE_URL
 
     to_date_dt = datetime.now(timezone.utc)
-    from_date_dt = to_date_dt - timedelta(weeks=2)
+    from_date_dt = to_date_dt - timedelta(weeks=weeks)
 
     to_date_str = to_date_dt.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
     from_date_str = from_date_dt.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
     api_limit = 100000 
-    endpoint_url = f"{base_url}/sensors/{sensor_id}/data"
+    endpoint_url = f"{base_url}/sensors/{sensor_id}/data/aggregate"
     
     params = {
-        "from_date": from_date_str,
-        "to_date": to_date_str,
-        "skip": 0,
-        "limit": api_limit
+        "from-date": from_date_str,
+        "to-date": to_date_str,
+        "interval": "1h",
+        "aggregation_type": "avg"
     }
 
     print(f"Rufe Daten ab von: {endpoint_url}")
@@ -236,22 +234,25 @@ def fetch_sensor_data_for_ml() -> pd.DataFrame:
         response = requests.get(endpoint_url, params=params) 
         response.raise_for_status() 
 
-        data: List[Dict[str, Any]] = response.json()
+        response_json: Dict[str, Any] = response.json()
 
-        if not data:
-            print("Keine Daten vom API-Endpunkt erhalten für den angegebenen Zeitraum.")
-            return pd.DataFrame(columns=['measurement_timestamp', 'temperatur'])
+        aggregated_data_list: List[Dict[str, Any]] = response_json.get("aggregated_data")
 
-        df = pd.DataFrame(data)
+        df = pd.DataFrame(aggregated_data_list)
 
-        df = df[['measurement_timestamp', 'value']]
-        df.rename(columns={'value': 'temperatur'}, inplace=True)
+        print(df.head(10).to_markdown())
+
+        df = df[['time_bucket', 'aggregated_value']]
+        df.rename(columns={
+            'time_bucket': 'measurement_timestamp',
+            'aggregated_value': 'temperatur'
+        }, inplace=True)
 
         df['measurement_timestamp'] = pd.to_datetime(df['measurement_timestamp'], format='ISO8601')
         df.set_index('measurement_timestamp', inplace=True)
-        df.sort_index(inplace=True) 
+        df.sort_index(inplace=True)
 
-        print(f"Daten erfolgreich geladen. {len(df)} Datenpunkte von {df.index.min()} bis {df.index.max()}.")
+        print(f"Aggregierte stündliche Daten erfolgreich geladen. {len(df)} Datenpunkte von {df.index.min()} bis {df.index.max()}.")
         return df
 
     except requests.exceptions.RequestException as e:
