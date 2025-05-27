@@ -1,111 +1,108 @@
-/* services/frontend/app/assets/style.css */
-
+/* === Allgemeiner Reset === */
 html, body {
     height: 100%;
-    margin: 0; /* Entfernt Standard-Browser-Margin */
-    padding: 0; /* Entfernt Standard-Browser-Padding */
-    overflow: hidden; /* Verhindert Scrollen auf der Hauptseite, wenn Inhalte in Containern scrollen */
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    font-family: Arial, sans-serif;
 }
 
-
+/* === Container für gesamten Inhalt === */
 .container-fluid {
-    height: 100%; 
-    display: flex; 
+    display: flex;
+    flex-direction: column;
+    height: 100%;
 }
 
-.sidebar {
-    position: fixed; 
+/* === Fixierte Topbar === */
+#topbar {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    background-color: #f8f9fa;
+    padding: 10px 20px;
+    height: 60px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    position: fixed;
     top: 0;
     left: 0;
-    width: 200px; /* Breite im ausgeklappten Zustand */
-    height: 100%;
-    background-color: #f8f9fa; /* Beispiel Hintergrundfarbe */
-    padding: 40px 20px;
-    transition: width 0.05s ease; /* Sanfter Übergang beim Ein-/Ausklappen */
-    overflow-x: hidden; /* Verstecke horizontalen Inhalt beim Einklappen */
+    right: 0;
+    z-index: 1000;
+    box-sizing: border-box;
 }
 
-.sidebar.collapsed {
-    width: 80px; /* Breite im eingeklappten Zustand */
-    padding: 0px; /* Passe hier weitere Stile an (z.B. Text verstecken) */
+/* === Profilbild ganz links === */
+.topbar-left {
+    display: flex;
+    align-items: center;
+    margin-right: 20px;
 }
 
-#plot-container {
-    /* Styling für den Plot-Bereich */
-    width: 100%; /* Volle Breite */
-    height: 100%; /* Volle Höhe */
-    padding: 10px;
+/* Bildstil */
+.topbar-image {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    border-radius: 50%;
 }
 
-.sidebar.collapsed h2,
-.sidebar.collapsed hr,
-.sidebar.collapsed p,
-.sidebar.collapsed a {
-    display: none; /* Blendet diese Elemente aus */
+/* === Navigation links daneben === */
+.nav-container {
+    display: flex;
+    gap: 20px;
 }
 
-.sidebar-toggle {
-    /* Styling für den Ein-/Ausklapp-Button */
-    position: absolute; /* Oder passe es in deinem Layout an */
-    top: 10px;
-    left: 20px; /* Position neben der Sidebar */
-    z-index: 1000; /* Stelle sicher, dass er über anderen Elementen liegt */
-}
-
-.content {
-    height: 100%; 
-    width: calc(100% - 200px); 
-    margin-left: 280px; 
-    padding: 20px;
-    transition: margin-left 0.3s ease, width 0.3s ease; 
-    overflow-y: auto; 
-    box-sizing: border-box; 
-}
-
-.sidebar.collapsed ~ .content {
-    margin-left: 80px; 
-    width: calc(100% - 80px); 
-}
-
-/* Styling für Navigationslinks */
-.sidebar .nav-link {
-    display: block; /* Stelle sicher, dass jeder Link eine neue Zeile beginnt */
-    padding: 10px 0;
-    color: #007bff; /* Beispiel Linkfarbe */
+/* Einzelne Navigationslinks */
+#topbar .nav-link {
+    display: flex;
+    align-items: center;
+    color: #007bff;
     text-decoration: none;
+    font-weight: 500;
 }
 
-.sidebar.collapsed .nav-link {
-    /* Stile für Links im eingeklappten Zustand (z.B. Text verstecken, nur Icons zeigen) */
-    white-space: nowrap; /* Verhindere Zeilenumbruch */
-    overflow: hidden; /* Text verstecken */
-    text-overflow: ellipsis; /* ... anzeigen, wenn Text abgeschnitten wird */
+#topbar .nav-link:hover {
+    text-decoration: underline;
+    color: #0056b3;
 }
 
-.sidebar .nav-link img.icon {
-    width: 24px; 
-    height: 24px;
-    vertical-align: middle; 
+/* Icon neben Text */
+#topbar .icon { 
+    width: 28px;
+    height: 28px;
+    margin-right: 8px;
 }
 
-.sidebar.collapsed .nav-link span {
-    display: none; 
+/* === Hauptbereich unter der Topbar === */
+.content {
+    flex: 1;
+    margin-top: 60px; /* Platz für die feste Topbar */
+    padding: 20px;
+    overflow-y: auto;
+    box-sizing: border-box;
 }
 
-.sidebar.collapsed .nav-link img.icon {
-    margin-right: 0 !important; 
-}
+/* === Responsive Anpassung === */
+@media (max-width: 768px) {
+    #topbar {
+        flex-direction: column;
+        align-items: flex-start;
+        height: auto;
+    }
 
-.loading-container {
-    position: fixed; 
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background-color: rgba(255, 255, 255, 0.8); /* Leicht transparenter Hintergrund */
-    display: flex; 
-    justify-content: center; 
-    align-items: center; 
-    z-index: 9999; /* Über anderen Elementen */
-}
+    .topbar-left {
+        margin-bottom: 10px;
+    }
 
+    #topbar .nav-link {
+        margin: 10px 0;
+    }
+
+    .content {
+        margin-top: auto;
+    }
+
+    .topbar-image {
+        margin-top: 5px;
+    }
+}
