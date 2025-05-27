@@ -17,24 +17,33 @@ from utils import api_client
 # Layout
 layout = html.Div([
     html.H1("Sensor Boxen"),
-    
+
     html.Div(id='sensor-box-list-container'),
 
     dcc.Loading(
-        id="loading-sensor-boxes",
-        type="default",
-        children=html.Div(id="loading-output")
+        id="loading-plot-data",
+        type="graph",
+        fullscreen=False,
+        children=html.Div(id='plot-container'),
+        className="loading-container"
     ),
+
+    html.H3("Wie funktioniert eine SenseBox?"),
+    html.Img(src="assets/senseBox.png", style={"width": "60%", "margin-bottom": "20px"}),
 
     html.H2("Standortkarte"),
 
     html.Iframe(
         src="https://opensensemap.org/explore/5faeb5589b2df8001b980304",
-        width="900",
-        height="600",
+        width="1200",
+        height="900",
         style={"border": "0"}
-    )
-])
+    ),
+    html.Div(style={"marginTop": "250px"})
+
+], style={"height": "100vh",           
+    "overflowY": "scroll",  
+    "overflowX": "hidden"})
 
 # Callback
 @app.callback(

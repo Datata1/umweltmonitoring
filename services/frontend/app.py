@@ -19,16 +19,16 @@ if not root_logger.handlers:
 
 logger = logging.getLogger(__name__)
 
-from components.sidebar import create_sidebar
+from components.sidebar import create_topbar
 
-from pages import sensor_box_list, sensor_data_viz
+from pages import sensor_box_list, sensor_data_viz, sensor_box_home
 from maindash import app
 
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     html.Div([ 
         html.Button(html.Img(src="/assets/icons/menu.svg", className="icon me-2", alt="Menu"), id="sidebar-toggle", className="sidebar-toggle"), # Button für Ein-/Ausklappen
-        create_sidebar(), 
+        create_topbar(), 
         html.Div(id='page-content', className="content"), 
     ], className="container-fluid"),
 ])
@@ -47,7 +47,7 @@ def display_page(pathname):
 
     elif pathname == '/': 
          logger.info("Navigating to home page.")
-         return html.H1("Willkommen im Umweltmonitoring Dashboard!")
+         return sensor_box_home.layout
     else:
         logger.warning(f"Page not found for pathname: {pathname}")
         return html.H1("404 - Seite nicht gefunden")

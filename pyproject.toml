@@ -26,6 +26,7 @@ dependencies = [
     "anyio>=4.9.0",
     "asyncio>=3.4.3",
     "uvloop>=0.21.0",
+    "pandas>=2.3.0"
 ]
 
 [tool.uv.workspace]
