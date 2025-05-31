@@ -74,7 +74,8 @@ async def train_all_models():
             X_train_df=X, 
             y_train_series=y_h_train, 
             horizon_hours=h,
-            base_save_path=MODEL_PATH
+            base_save_path=MODEL_PATH,
+            tune_hyperparameters=True
         )
         model_training_futures.append(future)
 
