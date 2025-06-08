@@ -3,7 +3,8 @@ import os
 import pandas as pd
 import joblib
 import lightgbm as lgb 
-from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+from sklearn.experimental import enable_halving_search_cv
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit, HalvingGridSearchCV
 from prefect import task
 from typing import Dict, Any, Tuple, Union, Optional
 
@@ -51,13 +52,13 @@ def train_single_model(
     model = lgb.LGBMRegressor(random_state=42)
 
     param_grid = {
-        "n_estimatiors": [70, 50]
-        # "learning_rate": [0.05, 0.03],
-        # "num_leaves": [15, 10],
-        # "max_depth": [5, 3]
+        "n_estimatiors": [70, 50, 40, 60],
+        "learning_rate": [0.05, 0.03, 0.06, 0.04],
+        "num_leaves": [15, 10, 5, 20],
+        "max_depth": [5, 3, 1, 7]
     }
 
-    gs = GridSearchCV(
+    gs = HalvingGridSearchCV(
         estimator=model,
         param_grid=param_grid,
         cv=tscv,
