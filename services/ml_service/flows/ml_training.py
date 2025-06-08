@@ -3,7 +3,7 @@ import sys
 import pandas as pd
 from pathlib import Path
 
-from prefect import flow, task
+from prefect import flow
 from prefect_dask.task_runners import DaskTaskRunner
 from prefect.futures import PrefectFuture
 from prefect.artifacts import create_markdown_artifact 
@@ -90,10 +90,12 @@ async def train_all_models():
         first_model_training_futures.append(future)
 
     first_training_results = []
+    first_training_models = {}
     for i, future in enumerate(first_model_training_futures):
         try:
-            result = future.result() 
+            result, model = future.result()
             first_training_results.append(result)
+            first_training_models[i + 1] = model
             print(f"Ergebnis für Horizont {result.get('horizon', i+1)} erhalten.")
         except Exception as e:
             print(f"FEHLER beim Abrufen des Ergebnisses für Future {i+1} (Horizont ~{i+1}): {e}")
@@ -107,7 +109,8 @@ async def train_all_models():
     # 3-2. Vorhersage auf Validierungsdaten und erzeugen eines Plots (siehe Artifact im Subflow Run)
     await generate_validation_flow(
         X_val=X_val,
-        y_val=y_val
+        y_val=y_val,
+        trained_models=first_training_models
     )
 
     # 3-3. Training auf gesamtem Trainingssatz (für anschließendes Forecasting)
@@ -126,7 +129,8 @@ async def train_all_models():
             X_train_df=X, 
             y_train_series=y_h_train,
             horizon_hours=h,
-            base_save_path=MODEL_PATH
+            base_save_path=MODEL_PATH,
+            unvalidated=False
         )
         second_model_training_futures.append(future)
 

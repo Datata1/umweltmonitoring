@@ -1,13 +1,11 @@
 # tasks/ml_training.py
 import os
 import pandas as pd
-import numpy as np
 import joblib
 import lightgbm as lgb 
-from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
-from sklearn.model_selection import GridSearchCV, cross_val_score, TimeSeriesSplit
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from prefect import task
-from typing import Dict, Any
+from typing import Dict, Any, Tuple, Union, Optional
 
 
 @task(name="Train Single Forecasting Model with LGBM", log_prints=True) # Name angepasst
@@ -16,8 +14,9 @@ def train_single_model(
     y_train_series: pd.Series,
     horizon_hours: int,
     base_save_path: str,
-    tscv_n_splits: int = 5
-) -> Dict[str, Any]:
+    unvalidated: Optional[bool] = True,
+    tscv_n_splits: Optional[int] = 5
+) -> Union[Tuple[Dict[str, Any], Union[lgb.LGBMRegressor, None]], Dict[str, Any]]:
     """
     Trainiert ein einzelnes LGBM-Modell für einen spezifischen Vorhersagehorizont,
     speichert es und gibt Metriken zurück.
@@ -30,13 +29,23 @@ def train_single_model(
 
     if X_train_df.empty or y_train_series.empty:
         print(f"WARNUNG: Leere Trainingsdaten für Horizont {horizon_hours}h. Überspringe Training.")
-        return {
-            "horizon": horizon_hours,
-            "model_path": None,
-            "rmse_fit": None,
-            "n_samples_trained": 0,
-            "error": "Empty training data"
-        }
+        
+        if unvalidated:
+            return {
+                "horizon": horizon_hours,
+                "model_path": None,
+                "rmse_fit": None,
+                "n_samples_trained": 0,
+                "error": "Empty training data"
+            }, None
+        else:
+            return {
+                "horizon": horizon_hours,
+                "model_path": None,
+                "rmse_fit": None,
+                "n_samples_trained": 0,
+                "error": "Empty training data"
+            }
 
     # 1. Modellwahl und Instanziierung: LGBMRegressor
     model = lgb.LGBMRegressor(random_state=42)
@@ -72,23 +81,42 @@ def train_single_model(
         joblib.dump(best_est, model_full_path)
         print(f"Modell gespeichert unter: {model_full_path}")
 
-        return {
-            "horizon": horizon_hours,
-            "model_path": model_full_path,
-            "rmse_fit": gs.best_score_,
-            "n_samples_trained": len(X_train_df),
-            "error": None
-        }
+        if unvalidated:
+            return {
+                "horizon": horizon_hours,
+                "model_path": model_full_path,
+                "rmse_fit": gs.best_score_,
+                "n_samples_trained": len(X_train_df),
+                "error": None
+            }, best_est
+        else:
+            return {
+                "horizon": horizon_hours,
+                "model_path": model_full_path,
+                "rmse_fit": gs.best_score_,
+                "n_samples_trained": len(X_train_df),
+                "error": None
+            }
     except Exception as e:
         print(f"FEHLER beim Training/Speichern des LGBM-Modells für Horizont {horizon_hours}h: {e}")
         # Detailliertere Fehlerausgabe für LGBM-spezifische Probleme
         if isinstance(e, lgb.basic.LightGBMError):
             print(f"LightGBM spezifischer Fehler: {e}")
-        return {
-            "horizon": horizon_hours,
-            "model_path": None,
-            "rmse_fit": None,
-            "n_samples_trained": len(X_train_df) if 'X_train_df' in locals() else 0,
-            "error": str(e)
-        }
+
+        if unvalidated:
+            return {
+                "horizon": horizon_hours,
+                "model_path": None,
+                "rmse_fit": None,
+                "n_samples_trained": len(X_train_df) if 'X_train_df' in locals() else 0,
+                "error": str(e)
+            }, None
+        else:
+            return {
+                "horizon": horizon_hours,
+                "model_path": model_full_path,
+                "rmse_fit": gs.best_score_,
+                "n_samples_trained": len(X_train_df),
+                "error": None
+            }
 

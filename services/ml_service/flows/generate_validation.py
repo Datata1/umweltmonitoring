@@ -7,11 +7,8 @@ sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 import pandas as pd # Sicherstellen, dass pandas importiert ist
 from prefect import flow
 from prefect.artifacts import create_markdown_artifact
-from typing import Optional, Literal
+from typing import Dict
 import base64 # Für die Konvertierung des Bildes
-
-from tasks.data_transformations import create_ml_features 
-from tasks.load_models import load_all_trained_models_task
 from tasks.predictions import generate_all_predictions_task
 from tasks.plotting import create_forecast_plot_task
 
@@ -22,19 +19,9 @@ FORECAST_TIME_WINDOW = 48
 @flow(name="Generate Validation, Plot", log_prints=True)
 async def generate_validation_flow(
     X_val: pd.DataFrame,
-    y_val: pd.DataFrame
+    y_val: pd.DataFrame,
+    trained_models: Dict
 ) -> pd.DataFrame:
-    print("PWDPWDPWDPWDPWD")
-    
-    trained_models = load_all_trained_models_task(
-        model_base_path=MODEL_PATH,
-        forecast_window=FORECAST_TIME_WINDOW
-    )
-    if not any(trained_models.values()):
-        print("FEHLER: Keine Modelle geladen, Validierung nicht möglich.")
-        await create_markdown_artifact(key="validation_status", markdown="## Validierung Fehlgeschlagen\n\nKeine trainierten Modelle gefunden.", description="Validierungsstatus")
-        return
-
     validation_start_timestamp = X_val.index.min()
 
     validation_df = await generate_all_predictions_task(
