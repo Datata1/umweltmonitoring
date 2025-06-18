@@ -16,10 +16,10 @@ from maindash import app
 from utils import api_client 
 
 layout = html.Div([
-    html.H1("Time Series Plot"),
+    html.H1("Time Series Plot", style={"textAlign": "center"}),
     # Füge hier später Bedienelemente hinzu (Sensor-Auswahl, Datumsbereich etc.)
 
-    html.Div(id='plot-container'), # Dieses Div wird den Graphen enthalten
+    html.Div(id='plot-container'),
 
     dcc.Loading(
         id="loading-plot-data", 

@@ -21,7 +21,7 @@ logger = logging.getLogger(__name__)
 
 from components.sidebar import create_topbar
 
-from pages import sensor_box_list, sensor_data_viz, sensor_box_home
+from pages import sensor_box_list, sensor_data_viz, sensor_box_home, sensor_box_stats
 from maindash import app
 
 app.layout = html.Div([
@@ -41,6 +41,9 @@ def display_page(pathname):
 
     if pathname == '/sensor_boxes':
         return sensor_box_list.layout
+    
+    if pathname == '/sensor_stats':
+        return sensor_box_stats.layout
     
     if pathname == '/data_viz':
         return sensor_data_viz.layout
