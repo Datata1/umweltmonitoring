@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 from components.plot import create_time_series_graph
 
 # Annahme: Die Backend URL kommt aus Umgebungsvariablen
-BACKEND_API_URL = os.environ.get("BACKEND_API_URL", "http://localhost:3000") 
+BACKEND_API_URL = os.environ.get("BACKEND_API_URL", "http://backend:3000") 
 
 def get_sensor_boxes():
     """Ruft eine Liste aller Sensorboxen vom Backend ab"""

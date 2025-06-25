@@ -4,22 +4,22 @@ from dash import dcc
 def create_topbar():
     return html.Div(
         [
-            # Profilbild ganz links
+            # Profilbild oben
             html.Div(
                 html.Img(
                     src="assets/iconk.png",
+                    alt="Profilbild",
                     className="topbar-image",
-                    alt="Profilbild"
+                    style={"borderRadius": "50%"}
                 ),
-                className="topbar-left"
+                className="topbar-top"
             ),
 
-            # Navigationslinks daneben
+            # Navigationslinks
             html.Div(
-                className="nav-container",
                 children=[
                     dcc.Link(
-                        [html.Img(src="/assets/icons/homeb.svg", className="icon"), "Hauptmenu"],
+                        [html.Img(src="/assets/icons/home.svg", className="icon"), "Hauptmenu"],
                         href="/",
                         className="nav-link"
                     ),
@@ -29,8 +29,8 @@ def create_topbar():
                         className="nav-link"
                     ),
                     dcc.Link(
-                        [html.Img(src="/assets/icons/bar-chart-2.svg", className="icon"), "Statistik"],
-                        href="/stats",
+                        [html.Img(src="/assets/icons/bar-chart.svg", className="icon"), "Vorhersagen"],
+                        href="/sensor_stats",
                         className="nav-link"
                     ),
                     dcc.Link(
@@ -38,8 +38,10 @@ def create_topbar():
                         href="/data_viz",
                         className="nav-link"
                     ),
-                ]
+                ],
+                className="nav-container"
             ),
         ],
-        id="topbar"
+        id="topbar",
+        className="topbar"
     )
