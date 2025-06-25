@@ -72,7 +72,8 @@ layout = html.Div([
             "maxWidth": "60%",
             "height": "auto"
         })
-    ], style={"textAlign": "center"})
+    ], style={"textAlign": "center"}),
+    html.Div(style={"height": "200px"})
 ], style={
     "height": "100vh",
     "overflowY": "scroll",
