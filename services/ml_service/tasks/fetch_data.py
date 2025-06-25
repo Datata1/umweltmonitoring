@@ -1,10 +1,12 @@
 # tasks/fetch_data.py
 
+import os
 import requests
 from typing import Dict, Any, List 
 from prefect import task, get_run_logger
 from datetime import datetime, timezone, timedelta 
 from sqlalchemy.exc import SQLAlchemyError 
+import pandas as pd
 
 from utils.db_utils import get_db_session
 
@@ -189,3 +191,73 @@ def fetch_store_sensor_chunk(
 
     logger.info(f"[Chunk {sensor_id}] Task beendet mit Erfolg: {result['success']}")
     return result 
+
+class SimpleSettings:
+    # Standardwerte, falls nicht über Umgebungsvariablen gesetzt
+    API_BASE_URL: str = os.getenv("API_BASE_URL", "http://backend:8000/api/v1")
+    TARGET_SENSOR_ID: str = os.getenv("TARGET_SENSOR_ID", "5faeb5589b2df8001b980307")
+
+settings = SimpleSettings()
+
+
+@task(
+    name="Get Sensor Data for ML",
+    description="Fetches sensor data for the last two weeks from the backend API for ML training."
+)
+def fetch_sensor_data_for_ml(weeks: int = 8) -> pd.DataFrame:
+    """
+    Holt Sensordaten der letzten zwei Wochen bis zum aktuellen Zeitpunkt von der API
+    und speichert sie in einem Pandas DataFrame.
+    """
+    sensor_id = settings.TARGET_SENSOR_ID
+    base_url = settings.API_BASE_URL
+
+    to_date_dt = datetime.now(timezone.utc)
+    from_date_dt = to_date_dt - timedelta(weeks=weeks)
+
+    to_date_str = to_date_dt.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+    from_date_str = from_date_dt.isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+    api_limit = 100000 
+    endpoint_url = f"{base_url}/sensors/{sensor_id}/data/aggregate"
+    
+    params = {
+        "from-date": from_date_str,
+        "to-date": to_date_str,
+        "interval": "1h",
+        "aggregation_type": "avg"
+    }
+
+    print(f"Rufe Daten ab von: {endpoint_url}")
+    print(f"Parameter: {params}")
+
+    try:
+        response = requests.get(endpoint_url, params=params) 
+        response.raise_for_status() 
+
+        response_json: Dict[str, Any] = response.json()
+
+        aggregated_data_list: List[Dict[str, Any]] = response_json.get("aggregated_data")
+
+        df = pd.DataFrame(aggregated_data_list)
+
+        print(df.head(10).to_markdown())
+
+        df = df[['time_bucket', 'aggregated_value']]
+        df.rename(columns={
+            'time_bucket': 'measurement_timestamp',
+            'aggregated_value': 'temperatur'
+        }, inplace=True)
+
+        df['measurement_timestamp'] = pd.to_datetime(df['measurement_timestamp'], format='ISO8601')
+        df.set_index('measurement_timestamp', inplace=True)
+        df.sort_index(inplace=True)
+
+        print(f"Aggregierte stündliche Daten erfolgreich geladen. {len(df)} Datenpunkte von {df.index.min()} bis {df.index.max()}.")
+        return df
+
+    except requests.exceptions.RequestException as e:
+        print(f"Fehler beim Abrufen der Daten von der API: {e}")
+        raise  
+    except Exception as e:
+        print(f"Ein unerwarteter Fehler ist aufgetreten: {e}")
+        raise

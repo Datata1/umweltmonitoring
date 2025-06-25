@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str | None = None
     MAINTENANCE_DATABASE_URL: str | None = None
 
-    INITIAL_TIME_WINDOW_IN_DAYS: int = 7
+    INITIAL_TIME_WINDOW_IN_DAYS: int = 365
     FETCH_TIME_WINDOW_DAYS: int = 2
 
     def __init__(self, **values):

@@ -21,8 +21,8 @@ FLOW_FUNCTION_NAME = "data_ingestion_flow"
 FLOW_ENTRYPOINT = f"./flows/data_ingestion.py:{FLOW_FUNCTION_NAME}" 
 APP_BASE_PATH = Path("/app/ml_service/") 
 DEFAULT_BOX_ID = "5faeb5589b2df8001b980304"
-INITIAL_FETCH_DAYS = 7
-CHUNK_DAYS = 2
+INITIAL_FETCH_DAYS = 365
+CHUNK_DAYS = 4
 INTERVAL_SECONDS = 180
 
 
@@ -80,20 +80,79 @@ async def main():
             f"http://prefect:4200/api/deployments",
             json={
                 "name": DEPLOYMENT_NAME,
-                "flow_id": str(flow_id),  # requests cant handle uuid 
+                "flow_id": str(flow_id),  
                 "work_pool_name": WORK_POOL_NAME,
                 "entrypoint": FLOW_ENTRYPOINT,
-                "path": str(APP_BASE_PATH),  # reguetsts cant handle Path objects
+                "path": str(APP_BASE_PATH),
                 "parameter_openapi_schema": deployment_params,
                 "parameters": deployment_params,
-                "schedules": schedule_payload,
+                "schedules": schedule_payload, 
+                "tags": deployment_tags,
+                "description": deployment_description,
+                "concurrency_options": {
+                    "collision_strategy": "CANCEL_NEW"
+                },
+            },
+            headers={"Content-Type": "application/json"},
+        )
+
+        print(f"Deployment '{DEPLOYMENT_NAME}' (ID: {deployment}) erfolgreich erstellt.")
+
+        # --- Deployment ml_training ---
+        deployment_tags = ["ml_training"]
+        deployment_description = f"trainiert fprecast modelle"
+
+        deployment_params = {
+        }
+
+        flow_id = await client.create_flow_from_name("train_all_models")
+
+        # --- Deployment erstellen ---
+        deployment = requests.post(
+            f"http://prefect:4200/api/deployments",
+            json={
+                "name": "ml_training_temperature",
+                "flow_id": str(flow_id),  
+                "work_pool_name": WORK_POOL_NAME,
+                "entrypoint": f"./flows/ml_training.py:{'train_all_models'}",
+                "path": str(APP_BASE_PATH),  
+                "parameter_openapi_schema": deployment_params,
+                "parameters": deployment_params,
                 "tags": deployment_tags,
                 "description": deployment_description,
             },
             headers={"Content-Type": "application/json"},
         )
 
-    print(f"Deployment '{DEPLOYMENT_NAME}' (ID: {deployment}) erfolgreich erstellt.")
+        print(f"Deployment '{DEPLOYMENT_NAME}' (ID: {deployment}) erfolgreich erstellt.")
+
+        # --- Deployment ml_training ---
+        deployment_tags = ["forecast"]
+        deployment_description = f"Erstellt predictions"
+
+        deployment_params = {
+        }
+
+        flow_id = await client.create_flow_from_name("generate_forecast_flow")
+
+        # --- Deployment erstellen ---
+        deployment = requests.post(
+            f"http://prefect:4200/api/deployments",
+            json={
+                "name": "create_forecast",
+                "flow_id": str(flow_id),  
+                "work_pool_name": WORK_POOL_NAME,
+                "entrypoint": f"./flows/generate_forecast.py:{'generate_forecast_flow'}",
+                "path": str(APP_BASE_PATH),  
+                "parameter_openapi_schema": deployment_params,
+                "parameters": deployment_params,
+                "tags": deployment_tags,
+                "description": deployment_description,
+            },
+            headers={"Content-Type": "application/json"},
+        )
+
+        print(f"Deployment '{DEPLOYMENT_NAME}' (ID: {deployment}) erfolgreich erstellt.")
 
     # --- Worker starten ---
     print(f"Starte Worker für Pool '{WORK_POOL_NAME}'...")

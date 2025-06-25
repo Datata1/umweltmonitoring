@@ -15,3 +15,5 @@ dump.rdb
 
 OpenSenseMap_Explorer.egg-info
 bdist.linux-x86_64
+
+host_models_dir/*

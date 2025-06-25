@@ -22,8 +22,8 @@ from utils.config import settings
       )
 async def data_ingestion_flow(
     box_id: str,
-    initial_fetch_days: int = 7,
-    fetch_chunk_days: int = 2
+    initial_fetch_days: int = 365,
+    fetch_chunk_days: int = 4
 ):
 
     logger = get_run_logger()
