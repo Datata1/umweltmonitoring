@@ -65,4 +65,17 @@ def create_ml_features(df_hourly: pd.DataFrame) -> Dict[str, pd.DataFrame]:
     
     print(f"Feature Engineering abgeschlossen. X shape: {X.shape}, Y_targets shape: {Y_targets.shape}")
 
-    return {"X": X, "Y_targets": Y_targets, "original_features_df": df_processed[feature_columns + target_columns]}
+    past_start = X.index.max() - pd.Timedelta(hours=FORECAST_TIME_WINDOW)
+    X_train = X[X.index < past_start].copy()
+    X_val = X[X.index >= past_start].copy()
+
+    Y_targets_train = Y_targets[Y_targets.index < past_start].copy()
+
+    return {
+        "X_train": X_train,
+        "X_val": X_val,
+        "X": X,
+        "Y_targets_train": Y_targets_train,
+        "Y_targets": Y_targets,
+        "original_features_df": df_processed[feature_columns + target_columns]
+    }
