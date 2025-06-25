@@ -1,13 +1,16 @@
 import os
 import sys
+import datetime
 import pandas as pd
 from pathlib import Path
 
-from prefect import flow
+from prefect import flow, get_run_logger
 from prefect_dask.task_runners import DaskTaskRunner
 from prefect.futures import PrefectFuture
-from prefect.artifacts import create_markdown_artifact 
+from prefect.artifacts import create_markdown_artifact
 
+from sqlalchemy import Column, Integer, String, DateTime, Float, func, inspect
+from sqlalchemy.orm import declarative_base, Mapped
 
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
@@ -16,6 +19,12 @@ from tasks.fetch_data import fetch_sensor_data_for_ml
 from tasks.data_transformations import create_ml_features
 from tasks.ml_training import train_single_model
 from utils.config import settings
+from utils.db_utils import get_db_session
+from utils.db_setup import initialize_database
+from utils.training import _update_or_create_model_in_db
+from utils.markdown import _create_beautiful_markdown
+from custom_types.prediction import TrainedModel, Base
+
 
 from generate_validation import generate_validation_flow
 
@@ -36,9 +45,15 @@ MODEL_PATH = Path("/app/ml_service/models")
 )
 async def train_all_models():
 
-    # 1. get data from sensors
-    sensor_data= fetch_sensor_data_for_ml(weeks=8)
+    logger = get_run_logger()
 
+    logger.info("Starte ML-Training Flow...")
+
+    # 0. Initialisierung Tabelle models
+    initialize_database()
+
+    # 1. get data from sensors
+    sensor_data= fetch_sensor_data_for_ml(weeks=16)
     print(len(sensor_data))
 
     # == debug == 
@@ -57,8 +72,7 @@ async def train_all_models():
     X = features_dict["X"]
     Y_targets_train = features_dict["Y_targets_train"]
     Y_targets = features_dict["Y_targets"]
-
-    y_val = sensor_data[sensor_data.index.isin(X_val.index)].copy()  # Tatsächliche Temperaturwerte der Validierungsdaten
+    y_val = sensor_data[sensor_data.index.isin(X_val.index)].copy()  
 
     processed_data_markdown =   X_train.head(5).to_markdown(index=True) + \
                                 "\n\n" + Y_targets_train.head(5).to_markdown(index=True)   
@@ -130,7 +144,7 @@ async def train_all_models():
             y_train_series=y_h_train,
             horizon_hours=h,
             base_save_path=MODEL_PATH,
-            unvalidated=False
+            return_model_object=False
         )
         second_model_training_futures.append(future)
 
@@ -149,28 +163,28 @@ async def train_all_models():
                 "n_samples_trained": 0, "error": str(e)
             })
 
+    with get_db_session() as db:
+        if db is None:
+            logger.error("Konnte keine DB-Session erhalten. Kann Ergebnisse nicht speichern.")
+            raise RuntimeError("DB Session nicht verfügbar.")
+
+        for i, future in enumerate(second_model_training_futures):
+            try:
+                result = future.result() 
+                
+                _update_or_create_model_in_db(db, result, logger)
+                
+                second_training_results.append(result)
+                logger.info(f"Ergebnis für Horizont {result.get('horizon_hours', i+1)} verarbeitet und in DB gespeichert.")
+
+            except Exception as e:
+                logger.error(f"FEHLER beim Abrufen/Speichern für Horizont ~{i+1}: {e}", exc_info=True)
+                error_result = {"horizon_hours": i + 1, "error": str(e)}
+                second_training_results.append(error_result)
+
     # 4. create artefact of training metrics
     print("Alle Trainings-Tasks abgeschlossen. Erstelle Metrik-Artefakt...")
-    if second_training_results:
-        metrics_df = pd.DataFrame(second_training_results)
-        metrics_df.sort_values(by="horizon", inplace=True)
-        
-        metrics_markdown = "## Trainingsmetriken der Modelle\n\n" + metrics_df.to_markdown(index=False)
-        
-        successful_trainings = metrics_df['error'].isnull().sum()
-        failed_trainings = metrics_df['error'].notnull().sum()
-        summary_text = (
-            f"\n\n**Zusammenfassung:**\n"
-            f"- Erfolgreich trainierte Modelle: {successful_trainings} von {FORECAST_TIME_WINDOW}\n"
-            f"- Fehlgeschlagene Trainings: {failed_trainings}\n"
-        )
-        if failed_trainings > 0:
-            summary_text += "- Details zu Fehlern siehe oben oder in den einzelnen Task-Logs.\n"
-
-        metrics_markdown += summary_text
-
-    else:
-        metrics_markdown = "## Trainingsmetriken der Modelle\n\nKeine Trainingsergebnisse vorhanden."
+    metrics_markdown = _create_beautiful_markdown(second_training_results, FORECAST_TIME_WINDOW)
 
     await create_markdown_artifact(
         key="model-training-metrics",

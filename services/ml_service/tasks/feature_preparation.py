@@ -10,7 +10,7 @@ from .data_transformations import create_ml_features
 async def get_latest_features_for_prediction_task(
     fetch_data_task_fn, 
     create_features_task_fn, 
-    lookback_days_for_plot: int = 7 
+    lookback_days_for_plot: int = 7
 ) -> Tuple[pd.DataFrame, pd.DataFrame, pd.Timestamp]:
     """
     Holt die neuesten Daten, erstellt Features für die aktuelle Vorhersage

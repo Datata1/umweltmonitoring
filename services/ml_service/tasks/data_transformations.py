@@ -3,7 +3,12 @@ import numpy as np
 from prefect import task
 from typing import Dict # Für den Rückgabetyp
 
+from utils.feature_enhancer import get_solar_features, get_weather_features
+
 FORECAST_TIME_WINDOW = 48
+LATITUDE = 52.019364
+LONGITUDE = -1.73893
+TIMEZONE = "Europe/London" 
 
 @task(name="Create ML Features and Targets")
 def create_ml_features(df_hourly: pd.DataFrame) -> Dict[str, pd.DataFrame]:
@@ -21,8 +26,18 @@ def create_ml_features(df_hourly: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         raise ValueError("df_hourly muss einen DatetimeIndex haben.")
     if 'temperatur' not in df_hourly.columns:
         raise ValueError("df_hourly muss eine 'temperatur'-Spalte enthalten.")
-
+    
+    
     df = df_hourly.copy()
+
+    # --- SCHRITT 2: EXTERNE FEATURES HOLEN (mit dem jetzt korrekten Zeitindex) ---
+    solar_features = get_solar_features(df.index)
+    weather_features = get_weather_features(df.index.min().strftime('%Y-%m-%d'), df.index.max().strftime('%Y-%m-%d'))
+
+    # --- SCHRITT 3: ALLES VERBINDEN ---
+    df = df.join(solar_features)
+    if weather_features is not None:
+        df = df.join(weather_features)
 
     # --- 1. Sin/Cos Zeit-Features ---
     df['hour_sin'] = np.sin(2 * np.pi * df.index.hour / 24.0)
@@ -34,14 +49,24 @@ def create_ml_features(df_hourly: pd.DataFrame) -> Dict[str, pd.DataFrame]:
         df[f'temp_lag_{lag}h'] = df['temperatur'].shift(lag)
 
     # --- 3. Rolling Window Features ---
-    windows_to_create = [3, 6, 12] 
+    windows_to_create = [3, 6, 24, 48, 72, 168] 
     for window in windows_to_create:
         df[f'temp_roll_mean_{window}h'] = df['temperatur'].shift(1).rolling(window=window, min_periods=1).mean()
         df[f'temp_roll_std_{window}h'] = df['temperatur'].shift(1).rolling(window=window, min_periods=1).std()
     
     # Optional: Temperaturdifferenzen
-    df['temp_diff_1h'] = df['temperatur'].shift(1).diff(periods=1) 
-    df['temp_diff_24h'] = df['temperatur'].shift(1).diff(periods=24) 
+    df['temp_diff_1h'] = df['temperatur'].shift(1).diff(periods=1)
+    df['temp_diff_3h'] = df['temperatur'].shift(1).diff(periods=3)
+    df['temp_diff_6h'] = df['temperatur'].shift(1).diff(periods=6)
+    df['temp_diff_12h'] = df['temperatur'].shift(1).diff(periods=12) 
+    df['temp_diff_24h'] = df['temperatur'].shift(1).diff(periods=24)
+
+    feature_cols_for_lags = ['weather_temp', 'weather_radiation_ghi', 'weather_cloud_cover']
+    lags_to_create = [1, 2, 3, 24] 
+    for col in feature_cols_for_lags:
+        if col in df.columns:
+            for lag in lags_to_create:
+                df[f'{col}_lag_{lag}h'] = df[col].shift(lag) 
 
 
     # --- 4. Target-Variablen erstellen (für t+1h bis t+48h) ---

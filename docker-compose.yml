@@ -4,7 +4,7 @@ version: '3.8'
 services:
   db:
     image: timescale/timescaledb:latest-pg16 
-    container_name: timescale_db
+    container_name: timescale_db_umw
     environment:
       POSTGRES_USER: ${DB_USER:-datata1}
       POSTGRES_PASSWORD: ${DB_PASSWORD:-devpassword}
@@ -23,7 +23,7 @@ services:
 
   redis:
     image: redis:latest 
-    container_name: redis_cache
+    container_name: redis_cache_umw
     restart: unless-stopped
     volumes:
       - redis_data:/data 
@@ -31,13 +31,14 @@ services:
       - "6379:6379"
 
   backend:
-    container_name: backend_fastapi
+    container_name: backend_fastapi_umw
     build:
       context: .
       dockerfile: ./services/backend/Dockerfile
     volumes:
       - ./services/backend:/app/backend
       - ./shared:/app/backend/shared
+       ./host_models_dir:/app/backend/models
     command: uv run uvicorn main:app --reload --host 0.0.0.0 --port 8000
     environment:
       - PREFECT_API_URL=http://prefect:4200/api
@@ -56,7 +57,7 @@ services:
       - "8000:8000"
 
   frontend:
-    container_name: frontend_dash
+    container_name: frontend_dash_umw
     command: uv run python ./app.py
     build:
       context: .
@@ -74,7 +75,7 @@ services:
       - "8050:8050"
 
   prefect:
-    container_name: prefect_server
+    container_name: prefect_server_umw
     image: prefecthq/prefect:3-latest 
     command: prefect server start --host 0.0.0.0
     environment:
@@ -89,7 +90,7 @@ services:
       - "4200:4200"
 
   prefect-worker:
-    container_name: prefect_worker
+    container_name: prefect_worker_umw
     build:
       context: . 
       dockerfile: ./services/ml_service/Dockerfile 
@@ -113,7 +114,7 @@ services:
       - "8001:8001"
 
   db-explorer:
-    container_name: pgweb_explorer
+    container_name: pgweb_explorer_umw
     image: sosedoff/pgweb:latest
     command: pgweb --url=postgres://${DB_USER}:${DB_PASSWORD}@db:5432/${DB_NAME}?sslmode=disable --bind=0.0.0.0 --prefix=db-admin --skip-open
     environment:
@@ -131,7 +132,7 @@ services:
       - "8081:8081" 
 
   caddy:
-    container_name: caddy_proxy
+    container_name: caddy_proxy_umw
     image: caddy:latest
     restart: unless-stopped
     ports:

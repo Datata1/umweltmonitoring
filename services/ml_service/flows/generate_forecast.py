@@ -17,12 +17,13 @@ from tasks.feature_preparation import get_latest_features_for_prediction_task
 from tasks.predictions import generate_all_predictions_task
 from tasks.plotting import create_forecast_plot_task
 
-FORECAST_TIME_WINDOW = 48 
+FORECAST_TIME_WINDOW = 48
 MODEL_PATH = "./models"   
 
 
 @flow(name="Generate Forecast and Plot", log_prints=True)
-async def generate_forecast_flow():
+async def generate_forecast_flow(
+):
     print("Starte Vorhersage-Flow...")
 
     # 1. Trainierte Modelle laden
@@ -35,12 +36,17 @@ async def generate_forecast_flow():
         await create_markdown_artifact(key="forecast_status", markdown="## Vorhersage Fehlgeschlagen\n\nKeine trainierten Modelle gefunden.", description="Vorhersagestatus")
         return
 
+
     # 2. Aktuellste Features für die Vorhersage holen + historische Daten für Plot
     latest_X_features, historical_data_for_plot, prediction_start_base_time = await get_latest_features_for_prediction_task(
         fetch_data_task_fn=fetch_sensor_data_for_ml,
         create_features_task_fn=create_ml_features, 
-        lookback_days_for_plot=21 
+        lookback_days_for_plot=21
     )
+
+    # TODO: validate models 
+
+    # TODO: write current model metrics to models table ()
 
     # 3. Vorhersagen generieren
     forecast_start_timestamp = prediction_start_base_time + pd.Timedelta(hours=1)
@@ -65,11 +71,15 @@ async def generate_forecast_flow():
         f"Vorhersage für die nächsten {FORECAST_TIME_WINDOW} Stunden, beginnend ab {forecast_start_timestamp.strftime('%Y-%m-%d %H:%M')}:\n\n"
         f"![Forecast Plot](data:image/png;base64,{base64_image})"
     )
+
+    # TODO: write forecasts to db
     
     await create_markdown_artifact(
         key="forecast-plot-with-history",
         markdown=markdown_content,
         description="Visualisierung der historischen Temperatur und der aktuellen 48h-Vorhersage."
     )
+
+    # TODO: if models accuracy is below threshold, then initialize here new training for the affected models 
 
     print("Vorhersage-Flow erfolgreich abgeschlossen. Plot-Artefakt erstellt.")

@@ -89,6 +89,9 @@ async def main():
                 "schedules": schedule_payload, 
                 "tags": deployment_tags,
                 "description": deployment_description,
+                "concurrency_options": {
+                    "collision_strategy": "CANCEL_NEW"
+                },
             },
             headers={"Content-Type": "application/json"},
         )

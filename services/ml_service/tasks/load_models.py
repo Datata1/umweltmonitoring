@@ -5,7 +5,7 @@ from prefect import task
 from typing import Dict, Any 
 import lightgbm as lgb 
 
-FORECAST_TIME_WINDOW = 48
+FORECAST_TIME_WINDOW = 12
 MODEL_PATH = "./models"
 
 @task(name="Load All Trained Models")

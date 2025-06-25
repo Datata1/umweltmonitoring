@@ -18,14 +18,15 @@ async def generate_all_predictions_task(
         raise ValueError("Feature DataFrame für die Vorhersage ist leer.")
     if not trained_models:
         raise ValueError("Keine trainierten Modelle für die Vorhersage übergeben.")
-
+    
 
     print(f"Generiere Vorhersagen für {forecast_window} Stunden ab {prediction_start_time}...")
     for h in range(1, forecast_window + 1):
         model = trained_models.get(h)
+
         if model:
             try:
-                pred_value = model.predict(current_features_df)[0] 
+                pred_value = model.predict(current_features_df)[0]
                 predictions.append(pred_value)
                 prediction_timestamps.append(prediction_start_time + pd.Timedelta(hours=h-1)) 
             except Exception as e:
