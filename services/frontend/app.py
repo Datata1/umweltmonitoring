@@ -56,21 +56,6 @@ def display_page(pathname):
         return html.H1("404 - Seite nicht gefunden")
 
 
-# Callback zum Ein-/Ausklappen der Seitenleiste
-@app.callback(Output('sidebar', 'className'), 
-              Input('sidebar-toggle', 'n_clicks'), 
-              State('sidebar', 'className'), 
-              prevent_initial_call=True)
-def toggle_sidebar(n_clicks, current_sidebar_class):
-    logger.info(f"Toggle sidebar callback triggered. n_clicks: {n_clicks}, current_class: {current_sidebar_class}") 
-
-    if n_clicks: 
-        if current_sidebar_class == "sidebar":
-            return "sidebar collapsed"
-        else: 
-            return "sidebar"
-    return "sidebar" 
-
 if __name__ == '__main__':
     logger.info("Starting Dash application (development server)...") 
     app.run(debug=True, host='0.0.0.0', port=8050)

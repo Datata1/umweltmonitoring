@@ -80,3 +80,27 @@ def fetch_and_create_plot_component(sensor_id: str, from_date: datetime, to_date
     except Exception as e:
         logger.error(f"Plot creation failed for sensor {sensor_id}: {e}")
         return html.Div(f"Fehler beim Erstellen des Plots: {str(e)}", style={'color': 'red'})
+    
+def get_predictions():
+    """Ruft die kombinierten historischen Daten und die Vorhersagen ab."""
+    url = f"{BACKEND_API_URL}/api/v1/predictions"
+    logger.info(f"Requesting predictions from: {url}")
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error fetching predictions from backend: {e}", exc_info=True)
+        raise
+
+def get_models():
+    """Ruft die Metadaten aller trainierten Modelle ab."""
+    url = f"{BACKEND_API_URL}/api/v1/models"
+    logger.info(f"Requesting models from: {url}")
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error fetching models from backend: {e}", exc_info=True)
+        raise

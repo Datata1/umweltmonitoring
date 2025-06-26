@@ -16,85 +16,45 @@ from utils import api_client
 
 # Layout
 layout = html.Div([
-    html.H1("Sensor Boxen", style={"textAlign": "center"}),
-
-    dcc.Loading(
-        id="loading-plot-data",
-        type="graph",
-        fullscreen=False,
-        children=html.Div(id='plot-container'),
-        className="loading-container"
-    ),
-
-    html.H2("Wo ist unsere SenseBox und welche Werte werden gemessen?", style={"textAlign": "center"}),
-
-    html.Div([
-        html.Iframe(
-            src="https://opensensemap.org/explore/5faeb5589b2df8001b980304",
-            width="1280",
-            height="960",
-            style={"border": "0", "display": "block", "marginLeft": "auto", "marginRight": "auto"}
-        )
-    ]),
 
     html.Div([
         html.Button(
-            "Sensorbox Daten als CSV herunterladen",
+            "Sensordaten als CSV herunterladen",
             id="download-btn",
             n_clicks=0,
-            style={
-                "backgroundColor": "#4CAF50",
-                "color": "white",
-                "padding": "12px 24px",
-                "fontSize": "16px",
-                "border": "none",
-                "borderRadius": "8px",
-                "cursor": "pointer",
-                "boxShadow": "2px 2px 10px rgba(0,0,0,0.1)"
-            }
+            className="download-button"
         ),
-        Download(id="download-data")
-    ], style={
-        "display": "flex",
-        "justifyContent": "center",
-        "marginTop": "60px"
-    }),
 
-    html.Div(style={"marginTop": "50px"}),
+        html.Div(
+            dcc.Loading(
+                id="loading-spinner-download",
+                type="circle",  
+                children=html.Div(id="loading-output-download"), 
+                overlay_style={"width": "30px", "height": "30px"}
+            ),
+            style={"width": "30px", "height": "30px"}
+        ),
 
-    html.H3("Wie funktioniert eine SenseBox?", style={"textAlign": "center"}),
+        dcc.Download(id="download-data")
+
+    ], className="download-section", style={"alignItems": "center", "gap": "20px"}),
+
+    dcc.Download(id="download-data"),
 
     html.Div([
-        html.Img(src="assets/senseBox.png", style={
-            "display": "block",
-            "marginLeft": "auto",
-            "marginRight": "auto",
-            "maxWidth": "60%",
-            "height": "auto"
-        })
-    ], style={"textAlign": "center"}),
-    html.Div(style={"height": "200px"})
-], style={
-    "height": "100vh",
-    "overflowY": "scroll",
-    "overflowX": "hidden"
-})
+        html.Div([
+            html.Iframe(
+                src="https://opensensemap.org/explore/5faeb5589b2df8001b980304",
+                className="responsive-iframe"
+            )
+        ], className="iframe-container"), 
+        
+        
+    ], className="content-card"), 
 
+    dcc.Loading(id="loading-plot-data", children=html.Div(id='plot-container')),
 
-
-# Callback zum Laden der Sensorboxenliste
-@app.callback(
-    Output('sensor-box-list-container', 'children'),
-    Input('page-content', 'children'),
-    State('url', 'pathname'),
-    prevent_initial_call=False
-)
-def trigger_data_load_for_sensor_box_list(page_content_children, pathname):
-    logger.info(f"trigger_data_load_for_sensor_box_list triggered. Pathname: {pathname}")
-    if pathname == '/sensor_boxes':
-        logger.info("Pathname matches /sensor_boxes. Calling load_sensor_boxes function to fetch data.")
-        return load_sensor_boxes_logic() 
-    return dash.no_update
+], className="page-container")
 
 
 def load_sensor_boxes_logic():
@@ -137,7 +97,9 @@ import csv
 import requests
 
 @app.callback(
+    # KORREKTUR: Der Callback hat jetzt zwei Outputs
     Output("download-data", "data"),
+    Output("loading-output-download", "children"), # Zielt auf das leere Div im Spinner
     Input("download-btn", "n_clicks"),
     prevent_initial_call=True
 )
@@ -154,10 +116,12 @@ def download_sensorboxen(n_clicks):
 
         all_data = []
 
+        # ... (deine Schleife zum Datenabruf bleibt exakt gleich)
         for sensor_id in sensor_ids:
             try:
                 url = f"http://backend:8000/api/v1/sensors/{sensor_id}/data"
-                response = requests.get(url)
+                params = {"limit": 1000000}
+                response = requests.get(url, params=params)
                 if response.status_code == 200:
                     data = response.json()
                     for item in data:
@@ -170,7 +134,8 @@ def download_sensorboxen(n_clicks):
 
         # CSV erstellen
         if not all_data:
-            return None
+            # KORREKTUR: Gib ein Tupel zurück, das beide Outputs bedient
+            return None, ""
 
         output = io.StringIO()
         fieldnames = list(all_data[0].keys())
@@ -180,8 +145,12 @@ def download_sensorboxen(n_clicks):
         writer.writerows(all_data)
         logger.info(f"Download wird vorbereitet mit {len(all_data)} Zeilen.")
 
-        return dict(content=output.getvalue(), filename="sensordaten.csv")
+        # KORREKTUR: Gib ein Tupel zurück.
+        # Der erste Wert geht an "download-data", der zweite an "loading-output-download".
+        # Ein leerer String "" für den zweiten Output versteckt den Spinner wieder.
+        return dict(content=output.getvalue(), filename="sensordaten.csv"), ""
 
     except Exception as e:
         logger.error(f"Fehler beim CSV-Export: {e}", exc_info=True)
-        return None
+        # Auch im Fehlerfall ein Tupel zurückgeben
+        return None, "Fehler!"

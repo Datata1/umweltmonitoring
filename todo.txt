@@ -23,3 +23,12 @@
 - extra: wenn zeit ist docker build optimieren (seperate venv, damit nicht unnötige pakete installiert werden müssen venv?)
 
 - Umgebungsvariablen streamlinen, es ist gerade sau unübersichtlich wo man was konfiguriert
+
+
+
+- dashboard
+    - csv export button von verwendeten Daten
+    - letze Daten zeitpunkt anzeigen
+    - zeige verschiedene Tabs an zwischen denen navigiert werden kann. Diese sollen eine korrelationsanalyse zu anderen Sensoren zeigen
+    - vergleich vorperioade
+    - histogramm

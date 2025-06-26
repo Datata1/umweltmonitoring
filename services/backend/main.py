@@ -18,6 +18,7 @@ from shared.crud import crud_sensor
 
 # Router
 from api.v1.endpoints import sensors as sensors_router
+from api.v1.endpoints import predictions as predictions_router
 
 # Importiere FastAPICache und Redis Backend
 from fastapi_cache import FastAPICache
@@ -139,3 +140,4 @@ app.mount("/assets", StaticFiles(directory=STATIC_DIR), name="assets")
 
 
 app.include_router(sensors_router.router, prefix="/api/v1", tags=["sensors"])
+app.include_router(predictions_router.router, prefix="/api/v1", tags=["predictions"])

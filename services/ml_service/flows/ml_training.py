@@ -9,27 +9,21 @@ from prefect_dask.task_runners import DaskTaskRunner
 from prefect.futures import PrefectFuture
 from prefect.artifacts import create_markdown_artifact
 
-from sqlalchemy import Column, Integer, String, DateTime, Float, func, inspect
-from sqlalchemy.orm import declarative_base, Mapped
-
 
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from tasks.fetch_data import fetch_sensor_data_for_ml
 from tasks.data_transformations import create_ml_features
 from tasks.ml_training import train_single_model
-from utils.config import settings
 from utils.db_utils import get_db_session
 from utils.db_setup import initialize_database
 from utils.training import _update_or_create_model_in_db
 from utils.markdown import _create_beautiful_markdown
-from custom_types.prediction import TrainedModel, Base
-
 
 from generate_validation import generate_validation_flow
 
 
-FORECAST_TIME_WINDOW = 48  # Stunden in die Zukunft
+FORECAST_TIME_WINDOW = 48 
 
 MODEL_PATH = Path("/app/ml_service/models")
 
