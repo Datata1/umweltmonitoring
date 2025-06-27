@@ -10,7 +10,7 @@ dependencies = [
     "dash>=3.0.3",
     "fastapi>=0.115.12",
     "fastapi-cache2>=0.2.2",
-    "prefect[dask]>=3.3.5",
+    "prefect[dask]==3.4.6",
     "psycopg2-binary>=2.9.10",
     "pydantic-settings>=2.8.1",
     "python-dotenv>=1.1.0",
