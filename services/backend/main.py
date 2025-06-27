@@ -1,6 +1,6 @@
 import os
 
-from fastapi import FastAPI
+from fastapi import FastAPI, APIRouter, status
 import logging
 import asyncio
 from contextlib import asynccontextmanager
@@ -138,6 +138,21 @@ async def favicon():
 
 app.mount("/assets", StaticFiles(directory=STATIC_DIR), name="assets")
 
+health_router = APIRouter()
+
+@health_router.get(
+    "/health",
+    tags=["Health Check"],
+    status_code=status.HTTP_200_OK,
+)
+def perform_healthcheck():
+    """
+    Gibt einfach einen OK-Status zurück, wenn der Dienst läuft.
+    """
+    return {"status": "ok"}
+
 
 app.include_router(sensors_router.router, prefix="/api/v1", tags=["sensors"])
 app.include_router(predictions_router.router, prefix="/api/v1", tags=["predictions"])
+app.include_router(health_router, prefix="/api", tags=["health-check"])
+

@@ -6,7 +6,7 @@ ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1
 WORKDIR /app
 
 RUN apt-get update && \
-    apt-get install -y libgomp1 --no-install-recommends && \
+    apt-get install -y libgomp1 curl --no-install-recommends && \
     rm -rf /var/lib/apt/lists/*
 
 RUN pip install uv
