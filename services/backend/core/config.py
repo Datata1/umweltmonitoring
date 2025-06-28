@@ -19,7 +19,7 @@ class Settings(BaseSettings):
 
     SENSOR_BOX_ID: str
 
-    INITIAL_TIME_WINDOW_IN_DAYS: int = 365
+    INITIAL_TIME_WINDOW_IN_DAYS: int = 100
     FETCH_TIME_WINDOW_DAYS: int = 4
 
     def __init__(self, **values):
