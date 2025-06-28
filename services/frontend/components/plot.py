@@ -24,7 +24,8 @@ def create_time_series_graph(
             x=[d[x_col] for d in data],
             y=[d[y_col] for d in data], 
             mode='lines', 
-            name=y_col 
+            name=y_col
+            
         ))
 
     # Konfiguriere das Layout des Graphen

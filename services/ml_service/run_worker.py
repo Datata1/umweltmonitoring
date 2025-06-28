@@ -21,9 +21,9 @@ FLOW_FUNCTION_NAME = "data_ingestion_flow"
 FLOW_ENTRYPOINT = f"./flows/data_ingestion.py:{FLOW_FUNCTION_NAME}" 
 APP_BASE_PATH = Path("/app/ml_service/") 
 DEFAULT_BOX_ID = "5faeb5589b2df8001b980304"
-INITIAL_FETCH_DAYS = 365
+INITIAL_FETCH_DAYS = 100
 CHUNK_DAYS = 4
-INTERVAL_SECONDS = 180
+INTERVAL_SECONDS = 300
 
 
 async def create_or_get_work_pool(client, name: str):
