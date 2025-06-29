@@ -14,7 +14,7 @@ from tasks.plotting import create_forecast_plot_task
 
 
 MODEL_PATH = "./models"
-FORECAST_TIME_WINDOW = 48
+FORECAST_TIME_WINDOW = 24
 
 @flow(name="Generate Validation, Plot", log_prints=True)
 async def generate_validation_flow(

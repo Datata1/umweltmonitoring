@@ -54,6 +54,7 @@ def display_page(pathname):
     else:
         logger.warning(f"Page not found for pathname: {pathname}")
         return html.H1("404 - Seite nicht gefunden")
+    
 
 
 if __name__ == '__main__':

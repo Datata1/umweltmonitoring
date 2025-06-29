@@ -19,7 +19,7 @@ def _update_or_create_model_in_db(db: Session, result: dict, logger):
         # --- UPDATE-Pfad ---
         logger.info(f"Aktualisiere bestehenden DB-Eintrag für Horizont {horizon}h.")
         db_model.model_path = result.get('model_path')
-        db_model.version_id = result.get('version_id', '1') 
+        db_model.version_id = int(result.get('version_id', 1))
         db_model.training_duration_seconds = result.get('training_duration_seconds')
         db_model.val_mae = result.get('val_mae')
         db_model.val_rmse = result.get('val_rmse')
@@ -33,7 +33,7 @@ def _update_or_create_model_in_db(db: Session, result: dict, logger):
             model_name=f"temperatur-vorhersage-{horizon}h", 
             forecast_horizon_hours=horizon,
             model_path=result.get('model_path'),
-            version_id=result.get('version_id', '1'),
+            version_id=int(result.get('version_id', 1)),
             training_duration_seconds=result.get('training_duration_seconds'),
             val_mae=result.get('val_mae'),
             val_rmse=result.get('val_rmse'),

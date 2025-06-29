@@ -17,7 +17,7 @@ from tasks.feature_preparation import get_latest_features_for_prediction_task
 from tasks.predictions import generate_all_predictions_task
 from tasks.plotting import create_forecast_plot_task
 
-FORECAST_TIME_WINDOW = 48
+FORECAST_TIME_WINDOW = 24
 MODEL_PATH = "./models"   
 
 
