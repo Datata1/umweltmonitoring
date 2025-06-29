@@ -6,7 +6,6 @@ import numpy as np #
 import joblib
 import lightgbm as lgb
 from sklearn.base import clone
-from sklearn.experimental import enable_halving_search_cv
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error, r2_score
 from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
 from prefect import task
@@ -34,10 +33,10 @@ def train_single_model(
     tscv = TimeSeriesSplit(n_splits=tscv_n_splits)
 
     param_grid = {
-        "n_estimators": [30, 50, 70, 100],
-        "learning_rate": [0.05, 0.08, 0.1],
-        "num_leaves": [5, 10, 20],
-        "max_depth": [3, 5, 7]
+        "n_estimators": [30, 50]  #, 70, 100],
+        # "learning_rate": [0.05, 0.08, 0.1],
+        # "num_leaves": [5, 10, 20],
+        # "max_depth": [3, 5, 7]
     }
 
     scoring_metrics = {
