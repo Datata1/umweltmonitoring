@@ -104,3 +104,15 @@ def get_models():
     except requests.exceptions.RequestException as e:
         logger.error(f"Error fetching models from backend: {e}", exc_info=True)
         raise
+
+def get_historical_predictions_for_model(horizon: int):
+    """Ruft die historischen Vorhersagen für ein spezifisches Modell-Horizont ab."""
+    url = f"{BACKEND_API_URL}/api/v1/models/{horizon}/historical_predictions"
+    logger.info(f"Requesting historical predictions for horizon {horizon}h from: {url}")
+    try:
+        response = requests.get(url)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Error fetching historical predictions for horizon {horizon}h: {e}", exc_info=True)
+        raise

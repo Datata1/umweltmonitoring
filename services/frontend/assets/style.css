@@ -311,7 +311,7 @@ html, body {
     display: flex;
     flex-direction: column; 
     overflow: hidden;
-    gap: 10px; 
+    
     height: 100%;
 
 }
@@ -464,9 +464,101 @@ html, body {
     flex-direction: column; /* Ordnet die Elemente im Container (also Ihre Plot-Layouts) untereinander an */
 }
 
-  .loading-parent-container {
+.loading-parent-container {
     flex-grow: 1;
     height: 90%;
   }
+
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 1rem;
+    padding-top: 1.5rem;
 }
 
+/* Stil für eine einzelne Metrik-Karte */
+.metric-card {
+    background-color: #ffffff;
+    border-radius: 8px;
+    padding: 1rem;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    border-left: 5px solid #4CAF50; /* Grüner Akzent-Rand */
+    transition: all 0.3s ease-in-out;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+}
+
+.metric-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Titel der Metrik (z.B. "ML RMSE") */
+.metric-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 0.5rem;
+}
+
+/* Hauptwert der Metrik */
+.metric-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #333;
+    line-height: 1.2;
+    margin-bottom: 0.5rem;
+}
+
+/* Zusätzlicher Text für Vergleiche (z.B. Differenz) */
+.metric-comparison {
+    font-size: 0.8rem;
+    color: #666;
+    margin-top: auto; /* Schiebt den Vergleichstext nach unten */
+}
+
+/* Styling für besseren/schlechteren Vergleich */
+.metric-value.text-success, .metric-comparison.text-success {
+    color: #28a745 !important;
+}
+
+.metric-value.text-danger, .metric-comparison.text-danger {
+    color: #dc3545 !important;
+}
+
+.nav-link.disabled {
+    opacity: 0.5;
+    pointer-events: none; /* Verhindert Klicks */
+    cursor: not-allowed;
+  }
+  
+  /* Container für die Statusmeldung auf der Hauptseite */
+  .status-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 500;
+  }
+  
+  /* Stil für die "Nicht Bereit"-Meldung (Gelb) */
+  .status-message.not-ready {
+    background-color: #fff3cd; /* Helles Gelb */
+    color: #664d03; /* Dunkelgelb */
+    border: 1px solid #ffecb5;
+  }
+  
+  /* Stil für die "Bereit"-Meldung (Grün) */
+  .status-message.ready {
+    background-color: #d1e7dd; /* Helles Grün */
+    color: #0f5132; /* Dunkelgrün */
+    border: 1px solid #badbcc;
+  }
+  
+  /* Stellt sicher, dass die Icons in der Statusmeldung gut aussehen */
+  .status-message .bi {
+    font-size: 1.2rem;
+    vertical-align: middle;
+  }

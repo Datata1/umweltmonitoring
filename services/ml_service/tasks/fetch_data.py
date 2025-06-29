@@ -204,7 +204,7 @@ settings = SimpleSettings()
     name="Get Sensor Data for ML",
     description="Fetches sensor data for the last two weeks from the backend API for ML training."
 )
-def fetch_sensor_data_for_ml(weeks: int = 8) -> pd.DataFrame:
+def fetch_sensor_data_for_ml(weeks: int = 16) -> pd.DataFrame:
     """
     Holt Sensordaten der letzten zwei Wochen bis zum aktuellen Zeitpunkt von der API
     und speichert sie in einem Pandas DataFrame.

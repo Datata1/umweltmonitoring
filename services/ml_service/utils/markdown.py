@@ -9,7 +9,7 @@ def _create_beautiful_markdown(training_results: List[Dict[str, Any]], forecast_
     if not training_results:
         return "## Trainingsmetriken der Modelle\n\nKeine Trainingsergebnisse vorhanden."
 
-    metrics_df = pd.DataFrame(training_results).iloc[48:]
+    metrics_df = pd.DataFrame(training_results).iloc[24:]
     
     # --- 1. Zusammenfassung erstellen ---
     successful_trainings = metrics_df['error'].isnull().sum()

@@ -23,7 +23,7 @@ from utils.markdown import _create_beautiful_markdown
 from generate_validation import generate_validation_flow
 
 
-FORECAST_TIME_WINDOW = 48 
+FORECAST_TIME_WINDOW = 24
 
 MODEL_PATH = Path("/app/ml_service/models")
 
@@ -47,7 +47,7 @@ async def train_all_models():
     initialize_database()
 
     # 1. get data from sensors
-    sensor_data= fetch_sensor_data_for_ml(weeks=8)
+    sensor_data= fetch_sensor_data_for_ml(weeks=16)
     print(len(sensor_data))
 
     # == debug == 

@@ -7,7 +7,7 @@ import joblib
 import lightgbm as lgb
 from sklearn.base import clone
 from sklearn.metrics import mean_absolute_error, mean_absolute_percentage_error, r2_score
-from sklearn.model_selection import GridSearchCV, TimeSeriesSplit
+from sklearn.model_selection import GridSearchCV, TimeSeriesSplit, HalvingGridSearchCV
 from prefect import task
 from typing import Dict, Any, Tuple, Union, Optional
 
@@ -33,25 +33,25 @@ def train_single_model(
     tscv = TimeSeriesSplit(n_splits=tscv_n_splits)
 
     param_grid = {
-        "n_estimators": [30],
-        "learning_rate": [0.05],
-        "num_leaves": [5],
-        "max_depth": [3]
+        "n_estimators": [30, 50, 70, 100],
+        "learning_rate": [0.05, 0.07, 0.1],
+        "num_leaves": [3, 5, 10],
+        "max_depth": [3, 5, 7]
     }
 
-    scoring_metrics = {
-        'neg_rmse': 'neg_root_mean_squared_error',
-        'neg_mae': 'neg_mean_absolute_error',
-        'neg_mape': 'neg_mean_absolute_percentage_error',
-        'r2': 'r2'
-    }
+    # scoring_metrics = {
+    #     'neg_rmse': 'neg_root_mean_squared_error',
+    #     'neg_mae': 'neg_mean_absolute_error',
+    #     'neg_mape': 'neg_mean_absolute_percentage_error',
+    #     'r2': 'r2'
+    # }
 
-    gs = GridSearchCV(
+    gs = HalvingGridSearchCV(
         estimator=model,
         param_grid=param_grid,
         cv=tscv,
-        scoring=scoring_metrics, 
-        refit='neg_rmse', 
+        scoring='neg_mean_absolute_error', 
+        refit=True, 
         n_jobs=-1,
         verbose=1
     )

@@ -14,7 +14,7 @@ from tasks.predictions import generate_all_predictions_task
 from sklearn.metrics import mean_absolute_error, r2_score
 
 MODEL_PATH = "./models"
-FORECAST_TIME_WINDOW = 48
+FORECAST_TIME_WINDOW = 24
 
 def calculate_robust_maep(y_true, y_pred):
     y_true = np.asarray(y_true)
