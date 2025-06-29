@@ -6,7 +6,7 @@ import json
 from datetime import datetime, timedelta, timezone
 from typing import List, Dict, Any, Optional
 
-from fastapi import Depends, HTTPException, APIRouter
+from fastapi import Depends, HTTPException, APIRouter, Response, status
 from pydantic import BaseModel, Field
 from sklearn.metrics import mean_squared_error, mean_absolute_error
 
@@ -378,4 +378,43 @@ def get_historical_predictions_for_model(horizon: int, db: Session = Depends(get
     except Exception as e:
         logger.error(f"Fehler bei hist. Vorhersage für Horizont {horizon}h: {e}", exc_info=True)
         raise HTTPException(status_code=500, detail=f"Interner Fehler bei der Erstellung der historischen Vorhersage.")
+    
+
+@router.get("/health/readiness", tags=["Health Check"])
+def check_model_readiness(response: Response):
+    """
+    Überprüft, ob Modelldateien im erwarteten Verzeichnis vorhanden sind.
+    
+    Gibt 'ready' zurück, wenn mindestens eine Datei gefunden wird, andernfalls 'not ready'.
+    Dieser Endpunkt kann für Kubernetes Readiness Probes verwendet werden.
+    """
+    try:
+        # 1. Überprüfen, ob das Verzeichnis überhaupt existiert
+        if not os.path.exists(MODEL_PATH) or not os.path.isdir(MODEL_PATH):
+            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            return {
+                "status": "not ready",
+                "detail": f"Model directory not found at: {MODEL_PATH}"
+            }
+        
+        # 2. Überprüfen, ob das Verzeichnis irgendwelche Dateien enthält
+        # Wir listen alle Einträge auf und filtern nach Dateien
+        model_files = [f for f in os.listdir(MODEL_PATH) if os.path.isfile(os.path.join(MODEL_PATH, f))]
+        
+        if not model_files:
+            response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+            return {
+                "status": "not ready",
+                "detail": f"No model files found in directory: {MODEL_PATH}"
+            }
+            
+        # 3. Wenn alles in Ordnung ist, 'ready' zurückgeben
+        return {"status": "ready"}
+
+    except Exception as e:
+        logger.error(f"Fehler bei der Readiness-Prüfung: {e}", exc_info=True)
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"status": "error", "detail": "An internal error occurred during readiness check."}
+
+
 

@@ -526,3 +526,39 @@ html, body {
 .metric-value.text-danger, .metric-comparison.text-danger {
     color: #dc3545 !important;
 }
+
+.nav-link.disabled {
+    opacity: 0.5;
+    pointer-events: none; /* Verhindert Klicks */
+    cursor: not-allowed;
+  }
+  
+  /* Container für die Statusmeldung auf der Hauptseite */
+  .status-container {
+    max-width: 800px;
+    margin: 20px auto;
+    padding: 15px;
+    border-radius: 8px;
+    text-align: center;
+    font-weight: 500;
+  }
+  
+  /* Stil für die "Nicht Bereit"-Meldung (Gelb) */
+  .status-message.not-ready {
+    background-color: #fff3cd; /* Helles Gelb */
+    color: #664d03; /* Dunkelgelb */
+    border: 1px solid #ffecb5;
+  }
+  
+  /* Stil für die "Bereit"-Meldung (Grün) */
+  .status-message.ready {
+    background-color: #d1e7dd; /* Helles Grün */
+    color: #0f5132; /* Dunkelgrün */
+    border: 1px solid #badbcc;
+  }
+  
+  /* Stellt sicher, dass die Icons in der Statusmeldung gut aussehen */
+  .status-message .bi {
+    font-size: 1.2rem;
+    vertical-align: middle;
+  }
