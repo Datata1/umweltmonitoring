@@ -35,6 +35,7 @@ try:
         (s for s in sensor_options if s["label"].lower() == "temperatur"),
         sensor_options[0] if sensor_options else None,
     )
+
     DEFAULT_SENSOR_VALUE = default_sensor["value"] if default_sensor else None
 except Exception as e:
     logger.error("Fehler beim Abrufen der Sensoren: %s", e)
@@ -348,3 +349,4 @@ def export_csv(n_clicks, filters):
     except Exception as e:
         logger.error("Fehler beim CSV-Export: %s", e, exc_info=True)
         return dash.no_update
+

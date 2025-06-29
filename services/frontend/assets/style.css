@@ -313,6 +313,7 @@ html, body {
     overflow: hidden;
     gap: 10px; 
     height: 100%;
+
 }
 
 /* Der Graph-Container soll jetzt den meisten Platz einnehmen und wachsen */
@@ -423,6 +424,7 @@ html, body {
 #status-info-container p {
     margin: 1px 0;
     line-height: 1.3;
+
 }
 
 .control-group {
@@ -466,3 +468,5 @@ html, body {
     flex-grow: 1;
     height: 90%;
   }
+}
+
