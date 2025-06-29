@@ -2,6 +2,7 @@ import asyncio
 import sys
 import requests
 import uuid
+import json
 from pathlib import Path
 
 from prefect import get_client, deploy
@@ -21,7 +22,7 @@ FLOW_FUNCTION_NAME = "data_ingestion_flow"
 FLOW_ENTRYPOINT = f"./flows/data_ingestion.py:{FLOW_FUNCTION_NAME}" 
 APP_BASE_PATH = Path("/app/ml_service/") 
 DEFAULT_BOX_ID = "5faeb5589b2df8001b980304"
-INITIAL_FETCH_DAYS = 100
+INITIAL_FETCH_DAYS = 365
 CHUNK_DAYS = 4
 INTERVAL_SECONDS = 300
 
@@ -62,6 +63,7 @@ async def main():
             "box_id": DEFAULT_BOX_ID,
             "initial_fetch_days": INITIAL_FETCH_DAYS,
             "fetch_chunk_days": CHUNK_DAYS,
+            "initial": False,
         }
         schedule_payload = [
             {
@@ -73,14 +75,14 @@ async def main():
         deployment_tags = ["ingestion", "opensensemap", "scheduled"]
         deployment_description = f"Holt alle {INTERVAL_SECONDS // 60} Minuten Daten von OpenSenseMap für Box {DEFAULT_BOX_ID}"
 
-        flow_id = await client.create_flow_from_name(FLOW_FUNCTION_NAME)
+        ingestion_flow_id = await client.create_flow_from_name(FLOW_FUNCTION_NAME)
 
         # --- Deployment erstellen ---
-        deployment = requests.post(
+        ingestion_deployment = requests.post(
             f"http://prefect:4200/api/deployments",
             json={
                 "name": DEPLOYMENT_NAME,
-                "flow_id": str(flow_id),  
+                "flow_id": str(ingestion_flow_id),  
                 "work_pool_name": WORK_POOL_NAME,
                 "entrypoint": FLOW_ENTRYPOINT,
                 "path": str(APP_BASE_PATH),
@@ -96,7 +98,9 @@ async def main():
             headers={"Content-Type": "application/json"},
         )
 
-        print(f"Deployment '{DEPLOYMENT_NAME}' (ID: {deployment}) erfolgreich erstellt.")
+        response_data = ingestion_deployment.json()
+
+        print(f"Deployment '{DEPLOYMENT_NAME}' (ID: {json.dumps(response_data, indent=2)}) erfolgreich erstellt.")
 
         # --- Deployment ml_training ---
         deployment_tags = ["ml_training"]
@@ -104,27 +108,69 @@ async def main():
 
         deployment_params = {
         }
+        schedule_payload = [
+            {
+                "schedule": {
+                    "cron": "0 2 * * *",
+                    "timezone": "Europe/Berlin"
+                }
+            }
+        ]
 
         flow_id = await client.create_flow_from_name("train_all_models")
 
         # --- Deployment erstellen ---
-        deployment = requests.post(
+        deployment_json_payload = {
+            "name": "ml_training_temperature",
+            "flow_id": str(flow_id),  
+            "work_pool_name": WORK_POOL_NAME,
+            "entrypoint": f"./flows/ml_training.py:{'train_all_models'}",
+            "path": str(APP_BASE_PATH),  
+            "schedules": schedule_payload, # Corrected from "schedule" to "schedules"
+            "tags": deployment_tags,
+            "description": deployment_description,
+        }
+
+        # Make the API request
+        deployment_response = requests.post(
             f"http://prefect:4200/api/deployments",
-            json={
-                "name": "ml_training_temperature",
-                "flow_id": str(flow_id),  
-                "work_pool_name": WORK_POOL_NAME,
-                "entrypoint": f"./flows/ml_training.py:{'train_all_models'}",
-                "path": str(APP_BASE_PATH),  
-                "parameter_openapi_schema": deployment_params,
-                "parameters": deployment_params,
-                "tags": deployment_tags,
-                "description": deployment_description,
-            },
+            json=deployment_json_payload,
             headers={"Content-Type": "application/json"},
         )
 
-        print(f"Deployment '{DEPLOYMENT_NAME}' (ID: {deployment}) erfolgreich erstellt.")
+        # --- NEUE DEBUGGING-LOGIK ---
+
+        # Check if the request was successful (status code 2xx)
+        if 200 <= deployment_response.status_code < 300:
+            deployment_id = deployment_response.json().get('id')
+            print(f"✅ Deployment 'ml_training_temperature' (ID: {deployment_id}) erfolgreich erstellt.")
+
+        # Handle client and server errors (status code 4xx or 5xx)
+        else:
+            print(f"❌ Fehler beim Erstellen des Deployments 'ml_training_temperature'.")
+            print(f"   Status Code: {deployment_response.status_code}")
+
+            try:
+                # Try to parse the JSON error response from the API
+                error_data = deployment_response.json()
+                
+                # Specifically format the detailed 422 error message
+                if deployment_response.status_code == 422 and "detail" in error_data:
+                    print("   Validierungsfehler von der API:")
+                    for error_detail in error_data["detail"]:
+                        # Extract location and message for each error
+                        location = " -> ".join(map(str, error_detail.get("loc", [])))
+                        message = error_detail.get("msg", "Keine Fehlermeldung vorhanden.")
+                        print(f"     - Ort: {location}")
+                        print(f"       Nachricht: {message}")
+                else:
+                    # Print the full JSON for other errors
+                    print("   API-Antwort:")
+                    print(json.dumps(error_data, indent=2))
+
+            except json.JSONDecodeError:
+                # Fallback if the response is not valid JSON
+                print(f"   Die Fehlerantwort war kein gültiges JSON: {deployment_response.text}")
 
         # --- Deployment ml_training ---
         deployment_tags = ["forecast"]
@@ -153,6 +199,16 @@ async def main():
         )
 
         print(f"Deployment '{DEPLOYMENT_NAME}' (ID: {deployment}) erfolgreich erstellt.")
+
+        # print(f"\nTriggering initial run for deployment '{response_data.get('id')}'...")
+        # try:
+        #     await client.create_flow_run_from_deployment(
+        #         deployment_id=response_data.get('id'),
+        #         parameters={"initial": True}
+        #     )
+        #     print(f"Initialer Lauf für '{DEPLOYMENT_NAME}' erfolgreich zur Warteschlange hinzugefügt.")
+        # except Exception as e:
+        #     print(f"Fehler beim Auslösen des initialen Laufs: {e}", file=sys.stderr)
 
     # --- Worker starten ---
     print(f"Starte Worker für Pool '{WORK_POOL_NAME}'...")

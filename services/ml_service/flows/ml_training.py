@@ -20,7 +20,7 @@ from utils.db_setup import initialize_database
 from utils.training import _update_or_create_model_in_db
 from utils.markdown import _create_beautiful_markdown
 
-from generate_validation import generate_validation_flow
+from flows.generate_validation import generate_validation_flow
 
 
 FORECAST_TIME_WINDOW = 24

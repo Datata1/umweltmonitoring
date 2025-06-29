@@ -562,3 +562,57 @@ html, body {
     font-size: 1.2rem;
     vertical-align: middle;
   }
+
+  .status-group-container {
+    display: flex;
+    justify-content: center;
+    gap: 20px; /* Abstand zwischen den Elementen */
+    max-width: 900px;
+    margin: 20px auto 40px auto; /* Abstand oben/unten und zentriert */
+    padding: 0;
+  }
+  
+  /*
+    2. Die einzelnen Status-Nachrichten
+    - Hier definieren wir das eigentliche Aussehen der Boxen
+    - Mit box-shadow für einen modernen Look
+  */
+  .status-message {
+    padding: 15px 20px;
+    border-radius: 12px; /* Etwas rundere Ecken */
+    font-weight: 500;
+    text-align: center;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* Leichter Schatten */
+    border: 1px solid transparent;
+    width: 100%; /* Füllt den verfügbaren Platz im Flex-Container */
+    transition: all 0.2s ease-in-out;
+  }
+  
+  /* Stil für die "Nicht Bereit"-Meldung (Gelb) */
+  .status-message.not-ready {
+    background-color: #fff9e6; 
+    color: #8c6d0f; 
+    border-color: #ffeebb;
+  }
+  
+  /* Stil für die "Bereit"-Meldung (Grün) */
+  .status-message.ready {
+    background-color: #e6f7ec;
+    color: #0f5132;
+    border-color: #cce8d6;
+  }
+  
+  /* Stellt sicher, dass die Icons gut aussehen */
+  .status-message .bi {
+    font-size: 1.1rem;
+    vertical-align: text-bottom;
+  }
+  
+
+  @media (max-width: 768px) {
+    .status-group-container {
+      flex-direction: column; 
+      gap: 15px; 
+      padding: 0 20px;
+    }
+  }

@@ -160,7 +160,7 @@ def sync_box_and_sensors_in_db(box_metadata: Dict[str, Any], initial_fetch_days:
             raise 
 
     logger.info(f"[DB Sync] Sync-Task für Box {box_id} abgeschlossen.")
-    return db_state_to_return 
+    return db_state_to_return, is_new_box
 
 
 

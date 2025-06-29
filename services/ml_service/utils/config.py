@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from urllib.parse import quote_plus # Sicherstellen, dass Passwörter URL-safe sind
+from urllib.parse import quote_plus 
 
 class Settings(BaseSettings):
     DB_USER: str
@@ -11,7 +11,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str | None = None
     MAINTENANCE_DATABASE_URL: str | None = None
 
-    INITIAL_TIME_WINDOW_IN_DAYS: int = 100
+    INITIAL_TIME_WINDOW_IN_DAYS: int = 365
     FETCH_TIME_WINDOW_DAYS: int = 2
 
     def __init__(self, **values):

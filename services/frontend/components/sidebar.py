@@ -39,9 +39,10 @@ def create_topbar():
                     # --- ENDE DER MODIFIKATION ---
                     dcc.Link(
                         [html.Img(src="/assets/icons/airplay.svg", className="icon"), "Daten Visualisierung"],
-                        href="/data_viz",
-                        className="nav-link"
-                    ),
+                        href="#", 
+                        id="link-data-viz",
+                        className="nav-link disabled"
+                    )
                 ],
                 className="nav-container"
             ),

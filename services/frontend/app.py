@@ -18,6 +18,8 @@ logger = logging.getLogger(__name__)
 
 # --- URL Konfiguration ---
 BACKEND_READINESS_URL = "http://backend:8000/api/v1/health/readiness"
+PREFECT_API_URL = "http://prefect:4200/api"
+DATA_INGESTION_FLOW_NAME = "data_ingestion_flow"
 
 # --- Importe ---
 from components.sidebar import create_topbar
@@ -28,6 +30,7 @@ from maindash import app
 app.layout = html.Div([
     dcc.Location(id='url', refresh=False),
     dcc.Store(id='model-status-store'),
+    dcc.Store(id='data-viz-status-store'),
     dcc.Interval(
         id='readiness-check-interval',
         interval=5 * 1000,  # Intervall auf 5 Sekunden zurückgesetzt
@@ -44,8 +47,9 @@ app.layout = html.Div([
 
 # Callback zur Seiten-Navigation
 @app.callback(Output('page-content', 'children'),
-              Input('url', 'pathname'))
-def display_page(pathname):
+              Input('url', 'pathname'),
+              State('data-viz-status-store', 'data'))
+def display_page(pathname, data_viz_status):
     # ... (Dieser Teil ist OK) ...
     logger.info(f"Display page callback triggered for pathname: {pathname}")
     if pathname == '/sensor_boxes':
@@ -59,7 +63,13 @@ def display_page(pathname):
             pass
         return html.Div([html.H2("Zugang gesperrt"), html.P("Die Modelle sind noch nicht bereit.")], className="page-container")
     if pathname == '/data_viz':
-        return sensor_data_viz.layout
+        if data_viz_status == 'ready':
+            return sensor_data_viz.layout
+        else:
+            return html.Div([
+                html.H2("Zugang gesperrt"),
+                html.P("Die initialen Daten wurden noch nicht verarbeitet. Bitte warten Sie, bis der Link 'Daten Visualisierung' aktiviert wird.")
+            ], className="page-container")
     elif pathname == '/':
          return sensor_box_home.layout
     else:
@@ -96,6 +106,53 @@ def update_nav_link_status(status):
     """Aktualisiert den Navigationslink basierend auf dem Store-Status."""
     if status == 'ready':
         return "/sensor_stats", "nav-link"
+    else:
+        return "#", "nav-link disabled"
+    
+@app.callback(
+    Output('data-viz-status-store', 'data'),
+    [Input('readiness-check-interval', 'n_intervals'),
+     Input('url', 'pathname')]
+)
+def poll_data_viz_status(n, pathname):
+    """Fragt die Prefect API ab, ob der Ingestion-Flow abgeschlossen wurde."""
+    payload = {
+        "flows": {"name": {"any_": [DATA_INGESTION_FLOW_NAME]}},
+        "flow_runs": {"state": {"type": {"any_": ["COMPLETED"]}}},
+        "limit": 1
+    }
+    headers = {
+        "Content-Type": "application/json"
+    }
+    
+    try:
+        response = requests.post(
+            f"{PREFECT_API_URL}/flow_runs/filter",
+            json=payload,
+            headers=headers,
+            timeout=5
+        )
+        response.raise_for_status()
+        
+        # Wenn die Antwort eine Liste mit mindestens einem Element ist, war der Flow erfolgreich.
+        if len(response.json()) > 0:
+            logger.info(f"Prefect-Check: Flow '{DATA_INGESTION_FLOW_NAME}' wurde bereits abgeschlossen.")
+            return 'ready'
+            
+    except requests.exceptions.RequestException as e:
+        logger.error(f"Fehler bei der Abfrage der Prefect API: {e}")
+        
+    return 'not ready'
+
+@app.callback(
+    [Output('link-data-viz', 'href'),
+     Output('link-data-viz', 'className')],
+    Input('data-viz-status-store', 'data')
+)
+def update_data_viz_link(status):
+    """Aktualisiert den Link zur Datenvisualisierung."""
+    if status == 'ready':
+        return "/data_viz", "nav-link"
     else:
         return "#", "nav-link disabled"
 
