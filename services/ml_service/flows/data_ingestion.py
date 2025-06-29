@@ -22,7 +22,7 @@ from utils.config import settings
       )
 async def data_ingestion_flow(
     box_id: str,
-    initial_fetch_days: int = 100,
+    initial_fetch_days: int = 365,
     fetch_chunk_days: int = 4
 ):
 

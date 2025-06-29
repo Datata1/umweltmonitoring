@@ -84,7 +84,6 @@ html, body {
 .content {
     flex: 1;
     margin-top: 30px; 
-    overflow-y: auto;
     box-sizing: border-box;
 }
 
@@ -255,29 +254,30 @@ html, body {
 
 /* Die linke Seitenleiste für die Steuerelemente */
 .sidebar {
-    flex: 0 0 300px; /* Nicht wachsen, nicht schrumpfen, feste Breite von 300px */
+    display: 'flex';
+    flex-direction: 'column';
+    height: 100%;
     padding: 20px;
     background-color: #f8f9fa;
     border-right: 1px solid #dee2e6;
-    overflow-y: auto; /* Scrollbar, falls die Höhe nicht ausreicht */
+    
 }
 
 .sidebar h2 {
     margin-top: 0;
     color: #343a40;
-    border-bottom: 2px solid #007BFF;
+    border-bottom: 2px solid #4CAF50;
     padding-bottom: 10px;
 }
 
 /* Container für einzelne Steuerelemente in der Sidebar */
 .control-group {
-    margin-bottom: 25px;
+    margin-bottom: 10px;
 }
 
 .control-group label {
     font-weight: bold;
     display: block;
-    margin-bottom: 8px;
     color: #495057;
 }
 
@@ -309,9 +309,10 @@ html, body {
     flex-grow: 1;
     min-width: 0;
     display: flex;
-    flex-direction: column; /* WICHTIG: Ändere dies zu 'column' */
+    flex-direction: column; 
     overflow: hidden;
-    gap: 10px; /* Fügt Abstand zwischen Plot und KPIs hinzu */
+    gap: 10px; 
+    height: 100%;
 }
 
 /* Der Graph-Container soll jetzt den meisten Platz einnehmen und wachsen */
@@ -319,30 +320,27 @@ html, body {
     flex-grow: 1; /* WICHTIG: Lässt diesen Container wachsen */
     min-height: 0; /* Wichtiger Fix für Flexbox-Größenprobleme */
     background-color: #fff;
-    padding: 15px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.05);
 }
 
 /* Der Container für die Statistik-Karten wird jetzt eine Zeile */
 .stats-container {
-    flex-shrink: 0; /* Verhindert, dass der Container schrumpft */
     display: flex;
     flex-direction: row; /* Ordnet die Karten nebeneinander an */
-    justify-content: space-around; /* Verteilt die Karten gleichmäßig */
-    gap: 15px;
+    justify-content: space-around;
 }
 
 /* Die einzelne Statistik-Karte */
 .stat-card {
-    flex: 1; /* Lässt jede Karte gleich viel Platz einnehmen */
+    
     background-color: #ffffff;
     padding: 15px;
     margin-top: 20px;
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.40);
     text-align: center;
-    max: 200px; /* Verhindert, dass die Karten zu breit werden */
+    width: 25%;
 }
 
 .stat-icon {
@@ -426,3 +424,45 @@ html, body {
     margin: 1px 0;
     line-height: 1.3;
 }
+
+.control-group {
+    margin-bottom: 20px; /* Sorgt für Abstand zwischen den einzelnen Konfigurationsgruppen */
+  }
+  
+  /* Container, der die Gruppe der Voreinstellungs-Buttons umschließt */
+  .preset-button-group {
+    display: flex;          /* Ordnet die Buttons nebeneinander an */
+    gap: 8px;               /* Erzeugt einen gleichmäßigen Abstand zwischen den Buttons */
+    margin-bottom: 10px;    /* Abstand zum darunterliegenden manuellen Eingabefeld */
+  }
+  
+  /* Styling für die einzelnen Voreinstellungs-Buttons */
+  .preset-button {
+    flex-grow: 1;           /* Lässt alle Buttons die gleiche Breite einnehmen */
+    padding: 8px;
+    border: 1px solid #4CAF50; /* Dezenter Rand */
+    border-radius: 5px;       /* Abgerundete Ecken */
+    background-color: #4CAF50; /* Leichter Hintergrund */
+    color: white;
+    text-align: center;
+    font-size: 14px;
+    cursor: pointer;          /* Zeigt an, dass das Element klickbar ist */
+    transition: all 0.2s ease-in-out; /* Weicher Übergang für Hover-Effekte */
+  }
+  
+  /* Effekt, wenn man mit der Maus über einen Button fährt */
+  .preset-button:hover {
+    background-color: #439746;
+    border-color: #439746;
+  }
+
+  .tab-content-container {
+    box-sizing: border-box; /* Wichtig: Stellt sicher, dass das Padding nicht zur Gesamthöhe addiert wird */
+    display: flex; /* Macht den Container zu einer Flexbox */
+    flex-direction: column; /* Ordnet die Elemente im Container (also Ihre Plot-Layouts) untereinander an */
+}
+
+  .loading-parent-container {
+    flex-grow: 1;
+    height: 90%;
+  }

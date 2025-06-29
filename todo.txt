@@ -1,34 +1,16 @@
-- prediction endpoint
 
-- prediction view
-
-- visualize view glattziehen
-
-- overview glatt ziehen mit Links zu allen ressourcen
-
-- frontend glattziehen
-
-- projekt aufräumen
-
-- Trainingsmetriken anzeigen
-
-- Plot in echtzeit erneurn falls noch nicht implementiert
+- Plot in echtzeit erneurn falls noch nicht implementiert -> endpunkt zum fetchen der last_update, wenn geändert hole daten neu
 
 - architektur schaubild
 
-- ERM schaubild
-
-- lauffähig machen in Docker
-
-- extra: wenn zeit ist docker build optimieren (seperate venv, damit nicht unnötige pakete installiert werden müssen venv?)
-
 - Umgebungsvariablen streamlinen, es ist gerade sau unübersichtlich wo man was konfiguriert
 
-
+- naives model vergleichen im dashboard
 
 - dashboard
     - csv export button von verwendeten Daten
     - letze Daten zeitpunkt anzeigen
+    - Trainingsmetriken anzeigen
     - zeige verschiedene Tabs an zwischen denen navigiert werden kann. Diese sollen eine korrelationsanalyse zu anderen Sensoren zeigen
     - vergleich vorperioade
     - histogramm
