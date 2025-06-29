@@ -15,8 +15,18 @@ from maindash import app
 from utils import api_client
 
 # Layout
-layout = html.Div([
+layout = layout = html.Div([
+    # --- iFrame zuerst ---
+    html.Div([
+        html.Div([
+            html.Iframe(
+                src="https://opensensemap.org/explore/5faeb5589b2df8001b980304",
+                className="responsive-iframe"
+            )
+        ], className="iframe-container"),
+    ], className="content-card"),
 
+    # --- Download-Button danach ---
     html.Div([
         html.Button(
             "Sensordaten als CSV herunterladen",
@@ -24,37 +34,21 @@ layout = html.Div([
             n_clicks=0,
             className="download-button"
         ),
-
         html.Div(
             dcc.Loading(
                 id="loading-spinner-download",
-                type="circle",  
-                children=html.Div(id="loading-output-download"), 
+                type="circle",
+                children=html.Div(id="loading-output-download"),
                 overlay_style={"width": "30px", "height": "30px"}
             ),
             style={"width": "30px", "height": "30px"}
         ),
-
         dcc.Download(id="download-data")
-
     ], className="download-section", style={"alignItems": "center", "gap": "20px"}),
 
-    dcc.Download(id="download-data"),
-
-    html.Div([
-        html.Div([
-            html.Iframe(
-                src="https://opensensemap.org/explore/5faeb5589b2df8001b980304",
-                className="responsive-iframe"
-            )
-        ], className="iframe-container"), 
-        
-        
-    ], className="content-card"), 
-
     dcc.Loading(id="loading-plot-data", children=html.Div(id='plot-container')),
-
 ], className="page-container")
+
 
 
 def load_sensor_boxes_logic():

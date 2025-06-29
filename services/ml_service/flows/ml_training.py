@@ -47,7 +47,7 @@ async def train_all_models():
     initialize_database()
 
     # 1. get data from sensors
-    sensor_data= fetch_sensor_data_for_ml(weeks=16)
+    sensor_data= fetch_sensor_data_for_ml(weeks=8)
     print(len(sensor_data))
 
     # == debug == 

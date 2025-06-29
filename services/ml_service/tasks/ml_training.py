@@ -33,10 +33,10 @@ def train_single_model(
     tscv = TimeSeriesSplit(n_splits=tscv_n_splits)
 
     param_grid = {
-        "n_estimators": [30, 50, 70, 100],
-        "learning_rate": [0.05, 0.08, 0.1],
-        "num_leaves": [5, 10, 20],
-        "max_depth": [3, 5, 7]
+        "n_estimators": [30],
+        "learning_rate": [0.05],
+        "num_leaves": [5],
+        "max_depth": [3]
     }
 
     scoring_metrics = {
