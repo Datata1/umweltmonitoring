@@ -126,6 +126,8 @@ async def main():
             "work_pool_name": WORK_POOL_NAME,
             "entrypoint": f"./flows/ml_training.py:{'train_all_models'}",
             "path": str(APP_BASE_PATH),  
+            "parameter_openapi_schema": deployment_params,
+            "parameters": deployment_params,
             "schedules": schedule_payload, # Corrected from "schedule" to "schedules"
             "tags": deployment_tags,
             "description": deployment_description,
